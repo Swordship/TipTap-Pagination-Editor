@@ -16,7 +16,6 @@ export default function Editor() {
   if (!editor) {
     return null
   }
-
   return (
     <div className="border rounded p-4">
       <EditorContent editor={editor} />
