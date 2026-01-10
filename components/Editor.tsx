@@ -11,9 +11,7 @@ export default function Editor() {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      CharacterCount.configure({
-        limit: LIMIT,
-      }),
+      CharacterCount.configure({ limit: LIMIT }),
     ],
     content: `
       <h1>Welcome to Your Document Editor</h1>
@@ -25,9 +23,7 @@ export default function Editor() {
   const editorState = useEditorState({
     editor,
     selector: ({ editor }) => {
-      if (!editor) {
-        return { characters: 0, words: 0 }
-      }
+      if (!editor) return { characters: 0, words: 0 }
 
       return {
         characters: editor.storage.characterCount.characters(),
@@ -47,27 +43,24 @@ export default function Editor() {
   if (!editor) return null
 
   return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <>
       <Toolbar editor={editor} />
 
-      <div className="p-8">
-        <EditorContent editor={editor} />
+      <div className="editor-wrapper">
+        <div className="editor-page">
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
-      {/* Character Counter Footer */}
-      <div className="border-t px-8 py-3 bg-gray-50">
+      <div className="editor-footer">
         <div
           className={`character-count ${
             characters >= LIMIT ? 'character-count--warning' : ''
           }`}
         >
           <div className="character-count__left">
-            {/* Circular Progress */}
             <svg viewBox="0 0 20 20">
-              {/* Background ring */}
               <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
-
-              {/* Progress ring */}
               <circle
                 r="5"
                 cx="10"
@@ -78,8 +71,6 @@ export default function Editor() {
                 strokeDasharray={`${(percentage * 31.4) / 100} 31.4`}
                 transform="rotate(-90) translate(-20)"
               />
-
-              {/* Inner white circle */}
               <circle r="6" cx="10" cy="10" fill="white" />
             </svg>
 
@@ -91,6 +82,6 @@ export default function Editor() {
           <div>{words} words</div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
