@@ -39,6 +39,11 @@ export default function Editor() {
   const characters = editorState?.characters ?? 0
   const words = editorState?.words ?? 0
 
+  const percentage = Math.min(
+    100,
+    Math.round((characters / LIMIT) * 100)
+  )
+
   if (!editor) return null
 
   return (
@@ -49,23 +54,41 @@ export default function Editor() {
         <EditorContent editor={editor} />
       </div>
 
-      {/* <div className="border-t px-8 py-3 bg-gray-50 text-sm text-gray-600 flex justify-between">
-        <span>Characters: {characters} / {LIMIT}</span>
-        <span>Words: {words}</span>
-      </div> */}
+      {/* Character Counter Footer */}
       <div className="border-t px-8 py-3 bg-gray-50">
         <div
-            className={`character-count ${
+          className={`character-count ${
             characters >= LIMIT ? 'character-count--warning' : ''
-            }`}
+          }`}
         >
-            <div className="character-count__left">
-            <strong>{characters}</strong> / {LIMIT} characters
-            </div>
+          <div className="character-count__left">
+            {/* Circular Progress */}
+            <svg viewBox="0 0 20 20">
+              {/* Background ring */}
+              <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
 
-            <div>
-            {words} words
-            </div>
+              {/* Progress ring */}
+              <circle
+                r="5"
+                cx="10"
+                cy="10"
+                fill="transparent"
+                stroke="currentColor"
+                strokeWidth="10"
+                strokeDasharray={`${(percentage * 31.4) / 100} 31.4`}
+                transform="rotate(-90) translate(-20)"
+              />
+
+              {/* Inner white circle */}
+              <circle r="6" cx="10" cy="10" fill="white" />
+            </svg>
+
+            <span>
+              <strong>{characters}</strong> / {LIMIT} characters
+            </span>
+          </div>
+
+          <div>{words} words</div>
         </div>
       </div>
     </div>

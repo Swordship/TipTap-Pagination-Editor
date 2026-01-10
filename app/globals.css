@@ -83,17 +83,17 @@ body {
   color: #6b7280;
   font-style: italic;
 }
-/* -----------------------------
-   Basic editor styles
------------------------------- */
+/* =========================
+   Tiptap base styles
+========================= */
 
 .tiptap :first-child {
   margin-top: 0;
 }
 
-/* -----------------------------
-   Character count styling
------------------------------- */
+/* =========================
+   Character count UI
+========================= */
 
 .character-count {
   display: flex;
@@ -110,6 +110,14 @@ body {
   gap: 0.5rem;
 }
 
-.character-count--warning {
+.character-count svg {
+  width: 20px;
+  height: 20px;
+  color: #7c3aed; /* purple */
+}
+
+/* Warning state (limit reached) */
+.character-count--warning,
+.character-count--warning svg {
   color: #dc2626; /* red */
 }
