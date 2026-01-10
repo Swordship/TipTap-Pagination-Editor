@@ -109,3 +109,32 @@ body {
   font-size: 0.75rem;
   color: #6b7280;
 }
+/* Editor Layout */
+.editor-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  background: #f3f4f6; /* Gray background like Google Docs */
+}
+
+.editor-page {
+  /* Physical dimensions - US Letter size */
+  width: 8.5in;
+  height: 11in;
+  
+  /* Margins - 1 inch on all sides */
+  padding: 1in;
+  
+  /* Box sizing - padding is INSIDE the dimensions */
+  box-sizing: border-box;
+  
+  /* Visual styling */
+  background: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  /* Remove border-radius - real paper doesn't have rounded corners */
+  border-radius: 0;
+  
+  /* For multiple pages later */
+  margin-bottom: 1rem;
+}
