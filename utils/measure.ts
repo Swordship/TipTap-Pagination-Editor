@@ -3,6 +3,9 @@
  * US Letter: 8.5" × 11" with 1" margins = 6.5" × 9" printable area
  */
 
+// Standard DPI for CSS pixels
+const DPI = 96
+
 // Constants for US Letter at 96 DPI
 export const PAGE_CONFIG = {
   // Full page dimensions
@@ -16,15 +19,15 @@ export const PAGE_CONFIG = {
   PRINTABLE_WIDTH_INCHES: 6.5,  // 8.5 - 2
   PRINTABLE_HEIGHT_INCHES: 9,   // 11 - 2
   
-  // Standard DPI for CSS pixels
-  DPI: 96,
+  // DPI
+  DPI: DPI,
   
-  // Calculated pixel values
-  get WIDTH_PX() { return this.WIDTH_INCHES * this.DPI },        // 816px
-  get HEIGHT_PX() { return this.HEIGHT_INCHES * this.DPI },      // 1056px
-  get MARGIN_PX() { return this.MARGIN_INCHES * this.DPI },      // 96px
-  get PRINTABLE_HEIGHT_PX() { return this.PRINTABLE_HEIGHT_INCHES * this.DPI }, // 864px
-  get PRINTABLE_WIDTH_PX() { return this.PRINTABLE_WIDTH_INCHES * this.DPI },   // 624px
+  // Pre-calculated pixel values at 96 DPI
+  WIDTH_PX: 8.5 * DPI,           // 816px
+  HEIGHT_PX: 11 * DPI,           // 1056px
+  MARGIN_PX: 1 * DPI,            // 96px
+  PRINTABLE_HEIGHT_PX: 9 * DPI,  // 864px
+  PRINTABLE_WIDTH_PX: 6.5 * DPI, // 624px
   
   // Gap between pages (visual only)
   PAGE_GAP_PX: 40,

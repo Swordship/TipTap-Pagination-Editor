@@ -6,14 +6,7 @@ import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { debounce } from 'lodash'
-import {
-  PAGE_CONFIG,
-  getPageDimensions,
-  measureEditorBlocks,
-  calculateTotalHeight,
-  calculatePageBreaks,
-  calculatePageCount,
-} from '../utils/measure'
+import { PAGE_CONFIG } from '../utils/measure'
 
 interface PageBreakInfo {
   blockIndex: number
@@ -34,18 +27,15 @@ export default function Editor() {
     immediatelyRender: false,
   })
 
-//   const [pageDimensions, setPageDimensions] = useState({
-//     pageWidth: PAGE_CONFIG.WIDTH_PX,
-//     pageHeight: PAGE_CONFIG.HEIGHT_PX,
-//     margin: PAGE_CONFIG.MARGIN_PX,
-//     printableHeight: PAGE_CONFIG.PRINTABLE_HEIGHT_PX,
-//     oneInch: PAGE_CONFIG.DPI,
-//   })
-  const [pageDimensions, setPageDimensions] = useState(() => {
-  const dims = getPageDimensions()
-  console.log('📐 Page dimensions:', dims)
-  return dims
-})
+  // Use static values initially - these are correct for 96 DPI
+  const [pageDimensions, setPageDimensions] = useState({
+    pageWidth: PAGE_CONFIG.WIDTH_PX,
+    pageHeight: PAGE_CONFIG.HEIGHT_PX,
+    margin: PAGE_CONFIG.MARGIN_PX,
+    printableHeight: PAGE_CONFIG.PRINTABLE_HEIGHT_PX,
+    oneInch: PAGE_CONFIG.DPI,
+  })
+  
   const [measurements, setMeasurements] = useState<{
     totalHeight: number
     blockCount: number
@@ -55,48 +45,58 @@ export default function Editor() {
   const [pageBreaks, setPageBreaks] = useState<PageBreakInfo[]>([])
   const [pageCount, setPageCount] = useState<number>(1)
 
-  // Get actual page dimensions on mount
-//   useEffect(() => {
-//     const dims = getPageDimensions()
-//     setPageDimensions(dims)
-//     console.log('📐 Page dimensions:', dims)
-//   }, [])
+  // Get actual page dimensions on mount (client-side only)
+  useEffect(() => {
+    import('../utils/measure').then(({ getPageDimensions }) => {
+      const dims = getPageDimensions()
+      setPageDimensions(dims)
+      console.log('📐 Page dimensions:', dims)
+    })
+  }, [])
 
   // Measure and calculate pagination
   const updatePagination = useCallback(() => {
     if (!editor) return
 
-    const editorDOM = editor.view.dom as HTMLElement
-    const blocks = measureEditorBlocks(editorDOM)
-    const totalHeight = calculateTotalHeight(editorDOM)
-    const breaks = calculatePageBreaks(blocks, pageDimensions.printableHeight)
-    const pages = calculatePageCount(totalHeight, pageDimensions.printableHeight)
+    // Dynamic import to avoid SSR issues
+    import('../utils/measure').then(({
+      measureEditorBlocks,
+      calculateTotalHeight,
+      calculatePageBreaks,
+      calculatePageCount,
+    }) => {
+      const editorDOM = editor.view.dom as HTMLElement
+      const blocks = measureEditorBlocks(editorDOM)
+      const totalHeight = calculateTotalHeight(editorDOM)
+      const breaks = calculatePageBreaks(blocks, pageDimensions.printableHeight)
+      const pages = calculatePageCount(totalHeight, pageDimensions.printableHeight)
 
-    // Apply page-break-before class to blocks that start new pages
-    const breakIndices = breaks.map(b => b.blockIndex)
-    blocks.forEach((block, index) => {
-      const element = block.element as HTMLElement
-      element.classList.remove('page-break-before')
-      
-      if (breakIndices.includes(index)) {
-        element.classList.add('page-break-before')
-      }
+      // Apply page-break-before class to blocks that start new pages
+      const breakIndices = breaks.map(b => b.blockIndex)
+      blocks.forEach((block, index) => {
+        const element = block.element as HTMLElement
+        element.classList.remove('page-break-before')
+        
+        if (breakIndices.includes(index)) {
+          element.classList.add('page-break-before')
+        }
+      })
+
+      console.log('📄 Pagination update:', { pages, breaks: breaks.length, totalHeight })
+
+      setMeasurements({
+        totalHeight,
+        blockCount: blocks.length,
+        blocks: blocks.map(b => ({
+          type: b.type,
+          height: b.height,
+          offsetTop: b.offsetTop,
+        })),
+      })
+
+      setPageBreaks(breaks)
+      setPageCount(Math.max(1, pages))
     })
-
-    console.log('📄 Pagination update:', { pages, breaks: breaks.length, totalHeight })
-
-    setMeasurements({
-      totalHeight,
-      blockCount: blocks.length,
-      blocks: blocks.map(b => ({
-        type: b.type,
-        height: b.height,
-        offsetTop: b.offsetTop,
-      })),
-    })
-
-    setPageBreaks(breaks)
-    setPageCount(Math.max(1, pages))
   }, [editor, pageDimensions.printableHeight])
 
   // Set up editor update listener
