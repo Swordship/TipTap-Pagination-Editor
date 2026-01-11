@@ -69,7 +69,7 @@ export default function Editor() {
           })
 
           setPageBreaks(breaks)
-          setPageCount(Math.max(1, pages)) // Always at least 1 page
+          setPageCount(Math.max(1, pages))
         }
       )
     }, 200)
@@ -85,7 +85,7 @@ export default function Editor() {
 
   if (!editor) return null
 
-  const PAGE_HEIGHT_PX = 1056 // 11in - 2in margins = 9in content @ 96dpi = 864px + padding
+  const PAGE_HEIGHT_PX = 1056 // 11in - 2in margins = 9in content @ 96dpi
   const PAGE_GAP = 24 // 1.5rem
 
   return (
@@ -112,18 +112,26 @@ export default function Editor() {
                 zIndex: 0,
               }}
             >
-              {/* Page number badge */}
+              {/* Page number in footer (bottom-center) */}
               <div
-                className="page-number"
+                className="page-number-footer"
                 style={{
                   position: 'absolute',
-                  top: '1rem',
-                  right: '1rem',
+                  bottom: '0.5in',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
                   zIndex: 10,
+                  pointerEvents: 'none',
                 }}
               >
-                <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium border border-gray-300">
-                  Page {pageIndex + 1}
+                <span 
+                  style={{
+                    fontFamily: '"Times New Roman", Times, serif',
+                    fontSize: '10pt',
+                    color: '#666',
+                  }}
+                >
+                  {pageIndex + 1}
                 </span>
               </div>
             </div>

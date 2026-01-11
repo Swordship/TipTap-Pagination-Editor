@@ -8,7 +8,7 @@ body {
   margin: 0;
   padding: 0;
   background: #f3f4f6;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
 /* =========================
@@ -28,66 +28,66 @@ body {
   position: relative;
 }
 
-/* Page frames are positioned absolutely behind content */
-.page-frame {
-  /* Styles are inline for dynamic positioning */
-}
+/* =========================
+   PAGE NUMBER FOOTER
+========================= */
 
-/* Content flows naturally on top */
-.editor-content {
-  /* Styles are inline */
+.page-number-footer {
+  /* Legal document style page numbers */
+  font-family: "Times New Roman", Times, serif;
+  font-size: 10pt;
+  color: #666;
 }
 
 /* =========================
-   PROSEMIRROR CONTENT
+   PROSEMIRROR CONTENT - LEGAL DOCUMENT STYLE
 ========================= */
 
 .ProseMirror {
   outline: none;
   min-height: 300px;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #1f2937;
+  
+  /* ✅ Legal document typography */
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: #000000;
 }
 
+/* Paragraphs - standard legal spacing */
 .ProseMirror p {
-  margin: 0.75rem 0;
+  margin: 0 0 1em 0;
 }
 
-.ProseMirror h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin: 1.25rem 0 0.75rem;
-}
-
-.ProseMirror h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 1.5rem 0 0.75rem;
-}
-
+/* ✅ Headings - "bold paragraphs" style (NOT marketing titles) */
+.ProseMirror h1,
+.ProseMirror h2,
 .ProseMirror h3 {
-  font-size: 1.25rem;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;  /* Same as body - legal convention */
   font-weight: bold;
-  margin: 1.25rem 0 0.5rem;
+  margin: 1em 0 0.5em;
+  color: #000000;
 }
 
+/* Lists - legal document style */
 .ProseMirror ul,
 .ProseMirror ol {
   padding-left: 1.5rem;
-  margin: 1rem 0;
+  margin: 1em 0;
 }
 
 .ProseMirror li {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.25em;
 }
 
+/* Blockquote - subtle legal style */
 .ProseMirror blockquote {
-  border-left: 4px solid #d1d5db;
+  border-left: 3px solid #666;
   padding-left: 1rem;
-  margin: 1.5rem 0;
-  color: #6b7280;
-  font-style: italic;
+  margin: 1em 0;
+  color: #000000;
+  font-style: normal;
 }
 
 /* =========================
@@ -105,7 +105,7 @@ body {
 @media print {
   /* Hide visual page UI elements */
   .page-frame,
-  .page-number {
+  .page-number-footer {
     display: none !important;
   }
 
