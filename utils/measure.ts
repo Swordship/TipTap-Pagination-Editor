@@ -111,3 +111,37 @@ export function calculateTotalHeight(
 ): number {
   return measurements.reduce((sum, block) => sum + block.height, 0)
 }
+
+/**
+ * Calculates where page breaks should occur
+ * Returns array of block indices that start new pages
+ */
+export function calculatePageBreaks(
+  measurements: Array<{ height: number }>,
+  pageHeight: number
+): number[] {
+  const pageBreaks: number[] = []
+  let currentPageHeight = 0
+  
+  console.log('📊 Calculating page breaks:')
+  console.log(`  Page capacity: ${pageHeight}px`)
+  console.log(`  Total blocks to process: ${measurements.length}`)
+  
+  measurements.forEach((block, index) => {
+    const willExceed = currentPageHeight + block.height > pageHeight
+    
+    if (willExceed) {
+      // This block starts a new page
+      console.log(`  ✂️ BREAK at block [${index}]: page was ${currentPageHeight.toFixed(2)}px, adding ${block.height.toFixed(2)}px would exceed ${pageHeight}px`)
+      pageBreaks.push(index)
+      currentPageHeight = block.height // Reset for new page
+    } else {
+      // Block fits on current page
+      currentPageHeight += block.height
+    }
+  })
+  
+  console.log(`  ✅ Result: ${pageBreaks.length} page break(s) at indices [${pageBreaks.join(', ')}]`)
+  
+  return pageBreaks
+}

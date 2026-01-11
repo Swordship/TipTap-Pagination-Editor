@@ -59,6 +59,8 @@ export default function Editor() {
     blocks: { type: string; height: number }[]
   } | null>(null)
 
+  const [pageBreaks, setPageBreaks] = useState<number[]>([])
+
   /* -----------------------------
      4. Measure ONCE on mount
   ----------------------------- */
@@ -66,11 +68,18 @@ export default function Editor() {
     if (!editor) return
 
     import('../utils/measure').then(
-      ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight }) => {
+      ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight, calculatePageBreaks }) => {
         const pageHeight = measurePageHeight()
         const editorDOM = editor.view.dom
         const blocks = measureEditorBlocks(editorDOM)
         const totalHeight = calculateTotalHeight(blocks)
+        const breaks = calculatePageBreaks(blocks, pageHeight)
+
+        console.log('📊 Initial content measurements:')
+        console.log(`  Total blocks: ${blocks.length}`)
+        console.log(`  Total height: ${totalHeight.toFixed(2)}px`)
+        console.log(`  Page height: ${pageHeight.toFixed(2)}px`)
+        console.log(`  Initial page breaks: [${breaks.join(', ')}]`)
 
         setMeasurements({
           pageHeight,
@@ -81,6 +90,8 @@ export default function Editor() {
             height: b.height,
           })),
         })
+        
+        setPageBreaks(breaks)
       }
     )
   }, [editor])
@@ -93,11 +104,16 @@ export default function Editor() {
 
     const handleUpdate = debounce(() => {
       import('../utils/measure').then(
-        ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight }) => {
+        ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight, calculatePageBreaks }) => {
           const pageHeight = measurePageHeight()
           const editorDOM = editor.view.dom
           const blocks = measureEditorBlocks(editorDOM)
           const totalHeight = calculateTotalHeight(blocks)
+          const breaks = calculatePageBreaks(blocks, pageHeight)
+
+          console.log('🔄 Content updated (debounced):')
+          console.log(`  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`)
+          console.log(`  Page breaks at: [${breaks.join(', ')}]`)
 
           setMeasurements({
             pageHeight,
@@ -108,6 +124,8 @@ export default function Editor() {
               height: b.height,
             })),
           })
+          
+          setPageBreaks(breaks)
         }
       )
     }, 200)
@@ -192,7 +210,7 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* 🔍 Measurement Debug Panel (OUTSIDE PAGE) */}
+      {/* 📊 Measurement Debug Panel */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}
