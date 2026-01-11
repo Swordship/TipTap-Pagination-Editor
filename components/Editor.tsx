@@ -4,6 +4,7 @@ import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { CharacterCount } from '@tiptap/extensions'
 import Toolbar from './Toolbar'
+import MeasurementDebug from './MeasurementDebug'
 import { useState, useEffect } from 'react'
 import { debounce } from 'lodash'
 
@@ -55,10 +56,11 @@ export default function Editor() {
     pageHeight: number
     totalHeight: number
     blockCount: number
+    blocks: { type: string; height: number }[]
   } | null>(null)
 
   /* -----------------------------
-     4. Measure ONCE on mount (Step 2)
+     4. Measure ONCE on mount
   ----------------------------- */
   useEffect(() => {
     if (!editor) return
@@ -70,22 +72,21 @@ export default function Editor() {
         const blocks = measureEditorBlocks(editorDOM)
         const totalHeight = calculateTotalHeight(blocks)
 
-        console.log('📊 Initial content measurements:')
-        console.log(`  Total blocks: ${blocks.length}`)
-        console.log(`  Total height: ${totalHeight.toFixed(2)}px`)
-        console.log(`  Page height: ${pageHeight.toFixed(2)}px`)
-
         setMeasurements({
           pageHeight,
           totalHeight,
           blockCount: blocks.length,
+          blocks: blocks.map(b => ({
+            type: b.type,
+            height: b.height,
+          })),
         })
       }
     )
   }, [editor])
 
   /* -----------------------------
-     5. Measure on EVERY update (Step 3 – DEBOUNCED)
+     5. Measure on EVERY update (debounced)
   ----------------------------- */
   useEffect(() => {
     if (!editor) return
@@ -98,25 +99,24 @@ export default function Editor() {
           const blocks = measureEditorBlocks(editorDOM)
           const totalHeight = calculateTotalHeight(blocks)
 
-          console.log('🔄 Content updated (debounced):')
-          console.log(
-            `  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`
-          )
-
           setMeasurements({
             pageHeight,
             totalHeight,
             blockCount: blocks.length,
+            blocks: blocks.map(b => ({
+              type: b.type,
+              height: b.height,
+            })),
           })
         }
       )
-    }, 200) // ⏱ wait 200ms after typing stops
+    }, 200)
 
     editor.on('update', handleUpdate)
 
     return () => {
       editor.off('update', handleUpdate)
-      handleUpdate.cancel() // 🚨 CRITICAL cleanup
+      handleUpdate.cancel()
     }
   }, [editor])
 
@@ -126,70 +126,80 @@ export default function Editor() {
      6. Render UI
   ----------------------------- */
   return (
-  <>
-    <Toolbar editor={editor} />
+    <>
+      {/* Toolbar */}
+      <Toolbar editor={editor} />
 
-    <div className="editor-wrapper">
-      <div className="editor-page">
-        <EditorContent editor={editor} />
-      </div>
-    </div>
-
-    <div className="editor-footer">
-      <div
-        className={`character-count flex items-center gap-4 ${
-          characters >= LIMIT ? 'character-count--warning' : ''
-        }`}
-      >
-        {/* Progress + character count */}
-        <div className="character-count__left flex items-center gap-2">
-          <svg viewBox="0 0 20 20">
-            <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
-            <circle
-              r="5"
-              cx="10"
-              cy="10"
-              fill="transparent"
-              stroke="currentColor"
-              strokeWidth="10"
-              strokeDasharray={`${(percentage * 31.4) / 100} 31.4`}
-              transform="rotate(-90) translate(-20)"
-            />
-            <circle r="6" cx="10" cy="10" fill="white" />
-          </svg>
-
-          <span>
-            <strong>{characters}</strong> / {LIMIT} characters
-          </span>
+      {/* Editor Page */}
+      <div className="editor-wrapper">
+        <div className="editor-page">
+          <EditorContent editor={editor} />
         </div>
-
-        {/* Word count */}
-        <div>{words} words</div>
-
-        {/* Measurement display */}
-        {measurements && (
-          <>
-            <div className="w-px h-4 bg-gray-300" />
-
-            <div className="flex gap-3 text-xs text-gray-500">
-              <span>{measurements.blockCount} blocks</span>
-
-              <span>{measurements.totalHeight.toFixed(0)}px tall</span>
-
-              <span
-                className={
-                  measurements.totalHeight > measurements.pageHeight
-                    ? 'text-red-600 font-semibold'
-                    : 'text-gray-500'
-                }
-              >
-                Page: {measurements.pageHeight.toFixed(0)}px
-              </span>
-            </div>
-          </>
-        )}
       </div>
-    </div>
-  </>
-)
+
+      {/* Footer */}
+      <div className="editor-footer">
+        <div
+          className={`character-count flex items-center gap-4 ${
+            characters >= LIMIT ? 'character-count--warning' : ''
+          }`}
+        >
+          {/* Character progress */}
+          <div className="character-count__left flex items-center gap-2">
+            <svg viewBox="0 0 20 20">
+              <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
+              <circle
+                r="5"
+                cx="10"
+                cy="10"
+                fill="transparent"
+                stroke="currentColor"
+                strokeWidth="10"
+                strokeDasharray={`${(percentage * 31.4) / 100} 31.4`}
+                transform="rotate(-90) translate(-20)"
+              />
+              <circle r="6" cx="10" cy="10" fill="white" />
+            </svg>
+
+            <span>
+              <strong>{characters}</strong> / {LIMIT} characters
+            </span>
+          </div>
+
+          {/* Word count */}
+          <div>{words} words</div>
+
+          {/* Quick measurement summary */}
+          {measurements && (
+            <>
+              <div className="w-px h-4 bg-gray-300" />
+
+              <div className="flex gap-3 text-xs text-gray-500">
+                <span>{measurements.blockCount} blocks</span>
+                <span>{measurements.totalHeight.toFixed(0)}px tall</span>
+                <span
+                  className={
+                    measurements.totalHeight > measurements.pageHeight
+                      ? 'text-red-600 font-semibold'
+                      : 'text-gray-500'
+                  }
+                >
+                  Page: {measurements.pageHeight.toFixed(0)}px
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* 🔍 Measurement Debug Panel (OUTSIDE PAGE) */}
+      {measurements && (
+        <MeasurementDebug
+          blocks={measurements.blocks}
+          pageHeight={measurements.pageHeight}
+          totalHeight={measurements.totalHeight}
+        />
+      )}
+    </>
+  )
 }
