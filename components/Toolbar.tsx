@@ -15,7 +15,8 @@ export default function Toolbar({ editor }: ToolbarProps) {
   if (!editor) return null
 
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap gap-2 border-b bg-white px-4 py-2">
+    <div className="sticky top-0 z-50 flex flex-wrap gap-2 border-b bg-white px-4 py-3 shadow-sm print:hidden">
+      {/* Text formatting */}
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={`${buttonBase} ${
@@ -23,8 +24,9 @@ export default function Toolbar({ editor }: ToolbarProps) {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
         }`}
+        title="Bold (Ctrl+B)"
       >
-        Bold
+        <strong>B</strong>
       </button>
 
       <button
@@ -34,12 +36,14 @@ export default function Toolbar({ editor }: ToolbarProps) {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
         }`}
+        title="Italic (Ctrl+I)"
       >
-        Italic
+        <em>I</em>
       </button>
 
       <div className="w-px bg-gray-300 mx-1" />
 
+      {/* Headings */}
       {headingLevels.map(level => (
         <button
           key={level}
@@ -51,6 +55,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
               ? 'bg-blue-600 text-white border-blue-600'
               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
           }`}
+          title={`Heading ${level}`}
         >
           H{level}
         </button>
@@ -58,6 +63,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
 
       <div className="w-px bg-gray-300 mx-1" />
 
+      {/* Lists */}
       <button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={`${buttonBase} ${
@@ -65,6 +71,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
         }`}
+        title="Bullet List"
       >
         • List
       </button>
@@ -76,12 +83,14 @@ export default function Toolbar({ editor }: ToolbarProps) {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
         }`}
+        title="Numbered List"
       >
         1. List
       </button>
 
       <div className="w-px bg-gray-300 mx-1" />
 
+      {/* Block elements */}
       <button
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         className={`${buttonBase} ${
@@ -89,8 +98,21 @@ export default function Toolbar({ editor }: ToolbarProps) {
             ? 'bg-blue-600 text-white border-blue-600'
             : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
         }`}
+        title="Quote"
       >
-        Quote
+        ❝ Quote
+      </button>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Print button */}
+      <button
+        onClick={() => window.print()}
+        className={`${buttonBase} bg-green-50 text-green-700 border-green-300 hover:bg-green-100`}
+        title="Print document (Ctrl+P)"
+      >
+        🖨️ Print
       </button>
     </div>
   )

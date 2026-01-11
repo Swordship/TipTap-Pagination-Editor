@@ -1,51 +1,38 @@
 /**
  * Measurement utilities for pagination
- * These functions measure actual rendered DOM content
+ * US Letter: 8.5" × 11" with 1" margins = 6.5" × 9" printable area
  */
 
-/**
- * Measures the height of the page container
- * Returns the printable content height (total height minus margins)
- */
-export function measurePageHeight(): number {
-  // Create temporary element with page dimensions
-  const temp = document.createElement('div')
-  temp.style.cssText = `
-    width: 8.5in;
-    height: 11in;
-    padding: 1in;
-    box-sizing: border-box;
-    position: absolute;
-    visibility: hidden;
-    top: -9999px;
-  `
+// Constants for US Letter at 96 DPI
+export const PAGE_CONFIG = {
+  // Full page dimensions
+  WIDTH_INCHES: 8.5,
+  HEIGHT_INCHES: 11,
   
-  document.body.appendChild(temp)
+  // Margins
+  MARGIN_INCHES: 1,
   
-  // Get actual rendered height
-  const rect = temp.getBoundingClientRect()
+  // Printable area (page minus margins)
+  PRINTABLE_WIDTH_INCHES: 6.5,  // 8.5 - 2
+  PRINTABLE_HEIGHT_INCHES: 9,   // 11 - 2
   
-  // Calculate printable height (total - top margin - bottom margin)
-  // Since box-sizing: border-box, padding is inside
-  const totalHeight = rect.height
+  // Standard DPI for CSS pixels
+  DPI: 96,
   
-  // Get one inch in pixels for margin calculation
-  const oneInch = getOneInchInPixels()
-  const printableHeight = totalHeight - (2 * oneInch)
+  // Calculated pixel values
+  get WIDTH_PX() { return this.WIDTH_INCHES * this.DPI },        // 816px
+  get HEIGHT_PX() { return this.HEIGHT_INCHES * this.DPI },      // 1056px
+  get MARGIN_PX() { return this.MARGIN_INCHES * this.DPI },      // 96px
+  get PRINTABLE_HEIGHT_PX() { return this.PRINTABLE_HEIGHT_INCHES * this.DPI }, // 864px
+  get PRINTABLE_WIDTH_PX() { return this.PRINTABLE_WIDTH_INCHES * this.DPI },   // 624px
   
-  document.body.removeChild(temp)
-  
-  console.log('📏 Page dimensions:', {
-    total: `${totalHeight.toFixed(2)}px`,
-    printable: `${printableHeight.toFixed(2)}px`,
-    margins: `${oneInch.toFixed(2)}px each side`,
-  })
-  
-  return printableHeight
+  // Gap between pages (visual only)
+  PAGE_GAP_PX: 40,
 }
 
 /**
  * Gets the pixel value of 1 inch in current browser context
+ * This accounts for browser zoom and display scaling
  */
 export function getOneInchInPixels(): number {
   const temp = document.createElement('div')
@@ -54,6 +41,7 @@ export function getOneInchInPixels(): number {
     height: 1in;
     position: absolute;
     visibility: hidden;
+    pointer-events: none;
   `
   
   document.body.appendChild(temp)
@@ -64,10 +52,29 @@ export function getOneInchInPixels(): number {
 }
 
 /**
+ * Gets actual page dimensions based on browser rendering
+ * Returns consistent values for page layout
+ */
+export function getPageDimensions() {
+  const oneInch = getOneInchInPixels()
+  
+  return {
+    pageWidth: oneInch * PAGE_CONFIG.WIDTH_INCHES,
+    pageHeight: oneInch * PAGE_CONFIG.HEIGHT_INCHES,
+    margin: oneInch * PAGE_CONFIG.MARGIN_INCHES,
+    printableHeight: oneInch * PAGE_CONFIG.PRINTABLE_HEIGHT_INCHES,
+    printableWidth: oneInch * PAGE_CONFIG.PRINTABLE_WIDTH_INCHES,
+    oneInch,
+  }
+}
+
+/**
  * Measures all block-level elements in the editor
- * Returns array of measurements with element references
+ * Returns array of measurements with cumulative positions
  */
 export function measureEditorBlocks(editorElement: HTMLElement) {
+  const editorRect = editorElement.getBoundingClientRect()
+  
   // Query all block-level content
   const blocks = editorElement.querySelectorAll(`
     p,
@@ -81,20 +88,23 @@ export function measureEditorBlocks(editorElement: HTMLElement) {
     element: Element
     type: string
     height: number
-    top: number
+    offsetTop: number  // Position relative to editor start
+    bottom: number     // Where this block ends
   }> = []
   
   blocks.forEach((block) => {
     if (block instanceof HTMLElement) {
       const rect = block.getBoundingClientRect()
       
-      // Only measure visible blocks
+      // Only measure visible blocks with content
       if (rect.height > 0) {
+        const offsetTop = rect.top - editorRect.top
         measurements.push({
           element: block,
           type: block.tagName.toLowerCase(),
           height: rect.height,
-          top: rect.top,
+          offsetTop,
+          bottom: offsetTop + rect.height,
         })
       }
     }
@@ -104,54 +114,95 @@ export function measureEditorBlocks(editorElement: HTMLElement) {
 }
 
 /**
- * Calculates total height of all content
+ * Calculate total content height
  */
-export function calculateTotalHeight(
-  measurements: Array<{ height: number }>
-): number {
-  return measurements.reduce((sum, block) => sum + block.height, 0)
+export function calculateTotalHeight(editorElement: HTMLElement): number {
+  const rect = editorElement.getBoundingClientRect()
+  // Get the actual scrollable height of content
+  return editorElement.scrollHeight || rect.height
 }
 
 /**
- * Calculates where page breaks should occur
- * Returns array of block indices that start new pages
+ * Calculates where page breaks should occur based on block positions
+ * Returns array of break info with pixel positions
  */
 export function calculatePageBreaks(
-  measurements: Array<{ height: number }>,
-  pageHeight: number
-): number[] {
-  const pageBreaks: number[] = []
-  let currentPageHeight = 0
+  measurements: Array<{ 
+    height: number
+    offsetTop: number
+    bottom: number
+    type: string
+  }>,
+  printableHeight: number
+): Array<{
+  blockIndex: number
+  pageNumber: number
+  breakPosition: number  // Pixel position where break occurs
+}> {
+  const pageBreaks: Array<{
+    blockIndex: number
+    pageNumber: number
+    breakPosition: number
+  }> = []
+  
+  let currentPage = 1
+  let pageStartY = 0
   
   console.log('📊 Calculating page breaks:')
-  console.log(`  Page capacity: ${pageHeight}px`)
-  console.log(`  Total blocks to process: ${measurements.length}`)
+  console.log(`  Printable height per page: ${printableHeight}px`)
+  console.log(`  Total blocks: ${measurements.length}`)
   
   measurements.forEach((block, index) => {
-    const willExceed = currentPageHeight + block.height > pageHeight
+    const pageEndY = pageStartY + printableHeight
     
-    if (willExceed) {
-      // This block starts a new page
-      console.log(`  ✂️ BREAK at block [${index}]: page was ${currentPageHeight.toFixed(2)}px, adding ${block.height.toFixed(2)}px would exceed ${pageHeight}px`)
-      pageBreaks.push(index)
-      currentPageHeight = block.height // Reset for new page
-    } else {
-      // Block fits on current page
-      currentPageHeight += block.height
+    // Check if this block extends beyond current page
+    if (block.bottom > pageEndY && block.offsetTop < pageEndY) {
+      // Block spans page boundary - break before it
+      currentPage++
+      pageBreaks.push({
+        blockIndex: index,
+        pageNumber: currentPage,
+        breakPosition: pageEndY,
+      })
+      pageStartY = pageEndY
+      
+      console.log(`  ✂️ Page ${currentPage} starts at block [${index}] (${block.type}) - position: ${pageEndY}px`)
+    } else if (block.offsetTop >= pageEndY) {
+      // Block is entirely on next page
+      currentPage++
+      pageBreaks.push({
+        blockIndex: index,
+        pageNumber: currentPage,
+        breakPosition: pageEndY,
+      })
+      pageStartY = pageEndY
+      
+      console.log(`  ✂️ Page ${currentPage} starts at block [${index}] (${block.type}) - position: ${pageEndY}px`)
     }
   })
   
-  console.log(`  ✅ Result: ${pageBreaks.length} page break(s) at indices [${pageBreaks.join(', ')}]`)
+  console.log(`  ✅ Total: ${pageBreaks.length + 1} pages`)
   
   return pageBreaks
 }
+
 /**
- * Calculates how many pages are needed for the content
+ * Calculate number of pages needed for given content height
  */
 export function calculatePageCount(
-  totalHeight: number,
-  pageHeight: number
+  totalContentHeight: number,
+  printableHeight: number
 ): number {
-  if (totalHeight === 0) return 1 // Always show at least 1 page
-  return Math.ceil(totalHeight / pageHeight)
+  if (totalContentHeight <= 0) return 1
+  return Math.max(1, Math.ceil(totalContentHeight / printableHeight))
+}
+
+/**
+ * Get the page number for a given Y position
+ */
+export function getPageForPosition(
+  yPosition: number,
+  printableHeight: number
+): number {
+  return Math.floor(yPosition / printableHeight) + 1
 }
