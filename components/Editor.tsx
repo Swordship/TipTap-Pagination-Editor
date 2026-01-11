@@ -1,25 +1,19 @@
 'use client'
 
-import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { CharacterCount } from '@tiptap/extensions'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
-import PageBreakMarker from './PageBreakMarker' // ✅ ADD THIS
+import PageBreakMarker from './PageBreakMarker'
 import { useState, useEffect } from 'react'
 import { debounce } from 'lodash'
-
-const LIMIT = 1000
 
 export default function Editor() {
   /* -----------------------------
      1. Create editor
   ----------------------------- */
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      CharacterCount.configure({ limit: LIMIT }),
-    ],
+    extensions: [StarterKit],
     content: `
       <h1>Welcome to Your Document Editor</h1>
       <p>Start typing…</p>
@@ -28,30 +22,7 @@ export default function Editor() {
   })
 
   /* -----------------------------
-     2. Character & word count
-  ----------------------------- */
-  const editorState = useEditorState({
-    editor,
-    selector: ({ editor }) => {
-      if (!editor) return { characters: 0, words: 0 }
-
-      return {
-        characters: editor.storage.characterCount.characters(),
-        words: editor.storage.characterCount.words(),
-      }
-    },
-  })
-
-  const characters = editorState?.characters ?? 0
-  const words = editorState?.words ?? 0
-
-  const percentage = Math.min(
-    100,
-    Math.round((characters / LIMIT) * 100)
-  )
-
-  /* -----------------------------
-     3. Measurement state
+     2. Measurement state
   ----------------------------- */
   const [measurements, setMeasurements] = useState<{
     pageHeight: number
@@ -61,57 +32,31 @@ export default function Editor() {
   } | null>(null)
 
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
-  const [pageBreakPositions, setPageBreakPositions] = useState<Array<{
-    blockIndex: number
-    yPosition: number
-    pageNumber: number
-  }>>([])
+  const [pageBreakPositions, setPageBreakPositions] = useState<
+    { blockIndex: number; yPosition: number; pageNumber: number }[]
+  >([])
 
   /* -----------------------------
-     4. Measure ONCE on mount
-  ----------------------------- */
-  useEffect(() => {
-    if (!editor) return
-
-    import('../utils/measure').then(
-      ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight, calculatePageBreaks }) => {
-        const pageHeight = measurePageHeight()
-        const editorDOM = editor.view.dom
-        const blocks = measureEditorBlocks(editorDOM)
-        const totalHeight = calculateTotalHeight(blocks)
-        const breaks = calculatePageBreaks(blocks, pageHeight)
-
-        setMeasurements({
-          pageHeight,
-          totalHeight,
-          blockCount: blocks.length,
-          blocks: blocks.map(b => ({
-            type: b.type,
-            height: b.height,
-          })),
-        })
-
-        setPageBreaks(breaks)
-      }
-    )
-  }, [editor])
-
-  /* -----------------------------
-     5. Measure on EVERY update (debounced)
+     3. Measure on editor updates
   ----------------------------- */
   useEffect(() => {
     if (!editor) return
 
     const handleUpdate = debounce(() => {
       import('../utils/measure').then(
-        ({ measurePageHeight, measureEditorBlocks, calculateTotalHeight, calculatePageBreaks }) => {
+        ({
+          measurePageHeight,
+          measureEditorBlocks,
+          calculateTotalHeight,
+          calculatePageBreaks,
+        }) => {
           const pageHeight = measurePageHeight()
           const editorDOM = editor.view.dom
           const blocks = measureEditorBlocks(editorDOM)
           const totalHeight = calculateTotalHeight(blocks)
           const breaks = calculatePageBreaks(blocks, pageHeight)
 
-          const breakPositions = breaks.map((blockIndex, breakIdx) => {
+          const breakPositions = breaks.map((blockIndex, idx) => {
             const element = blocks[blockIndex].element as HTMLElement
             const editorRect = editorDOM.getBoundingClientRect()
             const elementRect = element.getBoundingClientRect()
@@ -119,13 +64,9 @@ export default function Editor() {
             return {
               blockIndex,
               yPosition: elementRect.top - editorRect.top,
-              pageNumber: breakIdx + 2,
+              pageNumber: idx + 2,
             }
           })
-
-          console.log('🔄 Content updated (debounced):')
-          console.log(`  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`)
-          console.log('  Page breaks:', breakPositions)
 
           setMeasurements({
             pageHeight,
@@ -154,7 +95,7 @@ export default function Editor() {
   if (!editor) return null
 
   /* -----------------------------
-     6. Render UI
+     4. Render UI
   ----------------------------- */
   return (
     <>
@@ -166,65 +107,14 @@ export default function Editor() {
         <div className="editor-page relative">
           <EditorContent editor={editor} />
 
-          {/* ✅ PAGE BREAK MARKERS */}
-          {pageBreakPositions.map((breakPos, index) => (
+          {/* Page break markers */}
+          {pageBreakPositions.map((b, i) => (
             <PageBreakMarker
-              key={index}
-              pageNumber={breakPos.pageNumber}
-              yPosition={breakPos.yPosition}
+              key={i}
+              pageNumber={b.pageNumber}
+              yPosition={b.yPosition}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="editor-footer">
-        <div
-          className={`character-count flex items-center gap-4 ${
-            characters >= LIMIT ? 'character-count--warning' : ''
-          }`}
-        >
-          <div className="character-count__left flex items-center gap-2">
-            <svg viewBox="0 0 20 20">
-              <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
-              <circle
-                r="5"
-                cx="10"
-                cy="10"
-                fill="transparent"
-                stroke="currentColor"
-                strokeWidth="10"
-                strokeDasharray={`${(percentage * 31.4) / 100} 31.4`}
-                transform="rotate(-90) translate(-20)"
-              />
-              <circle r="6" cx="10" cy="10" fill="white" />
-            </svg>
-
-            <span>
-              <strong>{characters}</strong> / {LIMIT} characters
-            </span>
-          </div>
-
-          <div>{words} words</div>
-
-          {measurements && (
-            <>
-              <div className="w-px h-4 bg-gray-300" />
-              <div className="flex gap-3 text-xs text-gray-500">
-                <span>{measurements.blockCount} blocks</span>
-                <span>{measurements.totalHeight.toFixed(0)}px tall</span>
-                <span
-                  className={
-                    measurements.totalHeight > measurements.pageHeight
-                      ? 'text-red-600 font-semibold'
-                      : 'text-gray-500'
-                  }
-                >
-                  Page: {measurements.pageHeight.toFixed(0)}px
-                </span>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -234,6 +124,7 @@ export default function Editor() {
           blocks={measurements.blocks}
           pageHeight={measurements.pageHeight}
           totalHeight={measurements.totalHeight}
+          pageBreaks={pageBreaks}
         />
       )}
     </>
