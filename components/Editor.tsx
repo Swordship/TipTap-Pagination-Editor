@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { CharacterCount } from '@tiptap/extensions'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
+import PageBreakMarker from './PageBreakMarker' // ✅ ADD THIS
 import { useState, useEffect } from 'react'
 import { debounce } from 'lodash'
 
@@ -60,6 +61,11 @@ export default function Editor() {
   } | null>(null)
 
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
+  const [pageBreakPositions, setPageBreakPositions] = useState<Array<{
+    blockIndex: number
+    yPosition: number
+    pageNumber: number
+  }>>([])
 
   /* -----------------------------
      4. Measure ONCE on mount
@@ -75,12 +81,6 @@ export default function Editor() {
         const totalHeight = calculateTotalHeight(blocks)
         const breaks = calculatePageBreaks(blocks, pageHeight)
 
-        console.log('📊 Initial content measurements:')
-        console.log(`  Total blocks: ${blocks.length}`)
-        console.log(`  Total height: ${totalHeight.toFixed(2)}px`)
-        console.log(`  Page height: ${pageHeight.toFixed(2)}px`)
-        console.log(`  Initial page breaks: [${breaks.join(', ')}]`)
-
         setMeasurements({
           pageHeight,
           totalHeight,
@@ -90,7 +90,7 @@ export default function Editor() {
             height: b.height,
           })),
         })
-        
+
         setPageBreaks(breaks)
       }
     )
@@ -111,9 +111,21 @@ export default function Editor() {
           const totalHeight = calculateTotalHeight(blocks)
           const breaks = calculatePageBreaks(blocks, pageHeight)
 
+          const breakPositions = breaks.map((blockIndex, breakIdx) => {
+            const element = blocks[blockIndex].element as HTMLElement
+            const editorRect = editorDOM.getBoundingClientRect()
+            const elementRect = element.getBoundingClientRect()
+
+            return {
+              blockIndex,
+              yPosition: elementRect.top - editorRect.top,
+              pageNumber: breakIdx + 2,
+            }
+          })
+
           console.log('🔄 Content updated (debounced):')
           console.log(`  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`)
-          console.log(`  Page breaks at: [${breaks.join(', ')}]`)
+          console.log('  Page breaks:', breakPositions)
 
           setMeasurements({
             pageHeight,
@@ -124,8 +136,9 @@ export default function Editor() {
               height: b.height,
             })),
           })
-          
+
           setPageBreaks(breaks)
+          setPageBreakPositions(breakPositions)
         }
       )
     }, 200)
@@ -150,8 +163,17 @@ export default function Editor() {
 
       {/* Editor Page */}
       <div className="editor-wrapper">
-        <div className="editor-page">
+        <div className="editor-page relative">
           <EditorContent editor={editor} />
+
+          {/* ✅ PAGE BREAK MARKERS */}
+          {pageBreakPositions.map((breakPos, index) => (
+            <PageBreakMarker
+              key={index}
+              pageNumber={breakPos.pageNumber}
+              yPosition={breakPos.yPosition}
+            />
+          ))}
         </div>
       </div>
 
@@ -162,7 +184,6 @@ export default function Editor() {
             characters >= LIMIT ? 'character-count--warning' : ''
           }`}
         >
-          {/* Character progress */}
           <div className="character-count__left flex items-center gap-2">
             <svg viewBox="0 0 20 20">
               <circle r="10" cx="10" cy="10" fill="#e5e7eb" />
@@ -184,14 +205,11 @@ export default function Editor() {
             </span>
           </div>
 
-          {/* Word count */}
           <div>{words} words</div>
 
-          {/* Quick measurement summary */}
           {measurements && (
             <>
               <div className="w-px h-4 bg-gray-300" />
-
               <div className="flex gap-3 text-xs text-gray-500">
                 <span>{measurements.blockCount} blocks</span>
                 <span>{measurements.totalHeight.toFixed(0)}px tall</span>
@@ -210,7 +228,7 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* 📊 Measurement Debug Panel */}
+      {/* Debug Panel */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}

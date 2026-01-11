@@ -44,6 +44,8 @@ body {
 
   /* Future multi-page spacing */
   margin-bottom: 1rem;
+
+  position: relative;
 }
 
 /* =========================
