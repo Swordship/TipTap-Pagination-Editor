@@ -12,7 +12,7 @@ body {
 }
 
 /* =========================
-   MULTI-PAGE EDITOR LAYOUT
+   EDITOR WRAPPER
 ========================= */
 
 .editor-wrapper {
@@ -21,37 +21,6 @@ body {
   padding: 2.5rem 1rem;
   background: #f3f4f6;
   min-height: 100vh;
-}
-
-/* Page stack container */
-.pages-stack {
-  width: 8.5in;
-  position: relative;
-}
-
-/* =========================
-   PAGE BACKGROUNDS
-========================= */
-
-.page-container {
-  width: 8.5in;
-  position: absolute;
-  left: 0;
-}
-
-/* =========================
-   EDITOR CONTENT
-========================= */
-
-.editor-content-overlay {
-  position: relative;
-  z-index: 5;
-}
-
-.editor-page-content {
-  width: 8.5in;
-  padding: 1in;
-  box-sizing: border-box;
 }
 
 /* =========================
@@ -111,23 +80,56 @@ body {
 ========================= */
 
 @media print {
+  /* Hide page UI elements */
+  .page-number-badge,
+  .page-break-separator {
+    display: none !important;
+  }
+
+  /* Hide everything except editor */
   body * {
     visibility: hidden;
   }
 
-  .page-container,
-  .page-container * {
+  /* Show editor content */
+  .editor-wrapper,
+  .editor-wrapper * {
     visibility: visible;
   }
 
-  .page-container {
+  /* Reset layout */
+  .editor-wrapper {
     position: absolute;
     left: 0;
     top: 0;
-    box-shadow: none;
+    padding: 0;
+    background: white;
   }
 
+  /* Page frames */
+  .page-frame {
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always;
+  }
+
+  .page-frame:last-child {
+    page-break-after: auto;
+  }
+
+  /* Content */
+  .editor-content {
+    /* Content will flow through page frames */
+  }
+
+  /* Clean background */
   body {
     background: white;
+  }
+
+  /* Page setup */
+  @page {
+    size: letter;
+    margin: 0;
   }
 }

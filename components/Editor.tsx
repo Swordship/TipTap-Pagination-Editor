@@ -4,14 +4,10 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
-import PageContainer from './PageContainer'
 import { useState, useEffect } from 'react'
 import { debounce } from 'lodash'
 
 export default function Editor() {
-  /* -----------------------------
-     1. Create editor
-  ----------------------------- */
   const editor = useEditor({
     extensions: [StarterKit],
     content: `
@@ -21,9 +17,6 @@ export default function Editor() {
     immediatelyRender: false,
   })
 
-  /* -----------------------------
-     2. Measurement state
-  ----------------------------- */
   const [measurements, setMeasurements] = useState<{
     pageHeight: number
     totalHeight: number
@@ -34,9 +27,6 @@ export default function Editor() {
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
   const [pageCount, setPageCount] = useState<number>(1)
 
-  /* -----------------------------
-     3. Measure on editor updates
-  ----------------------------- */
   useEffect(() => {
     if (!editor) return
 
@@ -55,6 +45,8 @@ export default function Editor() {
           const totalHeight = calculateTotalHeight(blocks)
           const breaks = calculatePageBreaks(blocks, pageHeight)
           const pages = calculatePageCount(totalHeight, pageHeight)
+
+          console.log('📊 Pages:', pages)
 
           setMeasurements({
             pageHeight,
@@ -82,37 +74,86 @@ export default function Editor() {
 
   if (!editor) return null
 
-  /* -----------------------------
-     4. Render UI (CORRECT)
-  ----------------------------- */
+  const pageHeightWithPadding = 1056
+  const gap = 24
+
   return (
     <>
-      {/* Toolbar */}
       <Toolbar editor={editor} />
 
-      {/* Editor wrapper */}
       <div className="editor-wrapper">
-        <div className="pages-stack relative">
+        <div style={{ width: '8.5in', position: 'relative' }}>
+          {/* PAGE BACKGROUNDS */}
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <div key={`page-${i}`}>
+              {/* Page frame */}
+              <div
+                className="page-frame"
+                style={{
+                  position: 'absolute',
+                  top: i * (pageHeightWithPadding + gap),
+                  left: 0,
+                  width: '8.5in',
+                  height: `${pageHeightWithPadding}px`,
+                  background: 'white',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '2px',
+                  border: '1px solid #e5e7eb',
+                  zIndex: 0,
+                }}
+              >
+                {/* Page number badge */}
+                <div
+                  className="page-number-badge"
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    zIndex: 10,
+                  }}
+                >
+                  <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium border border-gray-300">
+                    Page {i + 1}
+                  </span>
+                </div>
+              </div>
 
-          {/* ✅ CONTENT FIRST (normal flow) */}
-          <div className="editor-content-overlay">
-            <div className="editor-page-content">
-              <EditorContent editor={editor} />
+              {/* Visual page break separator */}
+              {i < pageCount - 1 && (
+                <div
+                  className="page-break-separator"
+                  style={{
+                    position: 'absolute',
+                    top: (i + 1) * pageHeightWithPadding + i * gap + gap / 2,
+                    left: 0,
+                    right: 0,
+                    height: '1px',
+                    background: 'linear-gradient(90deg, transparent, #9ca3af 10%, #9ca3af 90%, transparent)',
+                    zIndex: 10,
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
             </div>
-          </div>
-
-          {/* ✅ PAGE FRAMES BEHIND */}
-          {Array.from({ length: pageCount }, (_, i) => (
-            <PageContainer
-              key={i}
-              pageNumber={i + 1}
-              height={measurements?.pageHeight || 1056}
-            />
           ))}
+
+          {/* CONTENT */}
+          <div
+            className="editor-content"
+            style={{
+              position: 'relative',
+              zIndex: 5,
+              width: '8.5in',
+              padding: '1in',
+              boxSizing: 'border-box',
+              minHeight: `${pageCount * (pageHeightWithPadding + gap)}px`,
+            }}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
 
-      {/* Debug Panel */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}
