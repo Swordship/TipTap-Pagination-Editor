@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
-import PageBreakMarker from './PageBreakMarker'
+import PageContainer from './PageContainer'
 import { useState, useEffect } from 'react'
 import { debounce } from 'lodash'
 
@@ -37,7 +37,6 @@ export default function Editor() {
   >([])
   const [pageCount, setPageCount] = useState<number>(1)
 
-
   /* -----------------------------
      3. Measure on editor updates
   ----------------------------- */
@@ -60,15 +59,10 @@ export default function Editor() {
           const breaks = calculatePageBreaks(blocks, pageHeight)
           const pages = calculatePageCount(totalHeight, pageHeight)
 
-
           const breakPositions = breaks.map((blockIndex, idx) => {
             const element = blocks[blockIndex].element as HTMLElement
             const editorRect = editorDOM.getBoundingClientRect()
             const elementRect = element.getBoundingClientRect()
-
-          console.log('🔄 Content updated (debounced):')
-          console.log(`  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`)
-          console.log(`  Total pages needed: ${pages}`)
 
             return {
               blockIndex,
@@ -76,6 +70,10 @@ export default function Editor() {
               pageNumber: idx + 2,
             }
           })
+
+          console.log('🔄 Content updated (debounced):')
+          console.log(`  Blocks: ${blocks.length}`)
+          console.log(`  Total pages needed: ${pages}`)
 
           setMeasurements({
             pageHeight,
@@ -105,30 +103,35 @@ export default function Editor() {
   if (!editor) return null
 
   /* -----------------------------
-     4. Render UI
+     4. Render UI (MULTI-PAGE)
   ----------------------------- */
   return (
     <>
       {/* Toolbar */}
       <Toolbar editor={editor} />
 
-      {/* Editor Page */}
+      {/* Multi-page editor wrapper */}
       <div className="editor-wrapper">
-        <div className="editor-page relative">
-          <EditorContent editor={editor} />
-
-          {/* Page break markers */}
-          {pageBreakPositions.map((b, i) => (
-            <PageBreakMarker
+        <div className="pages-stack relative">
+          {/* Render visual page containers */}
+          {Array.from({ length: pageCount }, (_, i) => (
+            <PageContainer
               key={i}
-              pageNumber={b.pageNumber}
-              yPosition={b.yPosition}
+              pageNumber={i + 1}
+              height={measurements?.pageHeight || 1056}
             />
           ))}
+
+          {/* Editor content overlay */}
+          <div className="editor-content-overlay">
+            <div className="editor-page-content">
+              <EditorContent editor={editor} />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Debug Panel */}
+      {/* Debug panel */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}

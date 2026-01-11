@@ -12,7 +12,7 @@ body {
 }
 
 /* =========================
-   EDITOR LAYOUT (SCREEN)
+   MULTI-PAGE EDITOR LAYOUT
 ========================= */
 
 .editor-wrapper {
@@ -20,32 +20,51 @@ body {
   justify-content: center;
   padding: 2.5rem 1rem;
   background: #f3f4f6;
+  min-height: 100vh;
+}
+
+/* Stack of pages (visual only) */
+.pages-stack {
+  width: 8.5in;
+  position: relative;
+}
+
+/* Individual page container (visual shell) */
+.page-container {
+  width: 8.5in;
+  margin-bottom: 1.5rem; /* Space between pages */
+  position: relative;
+}
+
+.page-container:last-child {
+  margin-bottom: 0;
 }
 
 /* =========================
-   DOCUMENT PAGE (US LETTER)
+   EDITOR CONTENT OVERLAY
 ========================= */
 
-.editor-page {
-  /* Physical paper size */
+/*
+  IMPORTANT:
+  - This must NOT be absolute
+  - Content must flow naturally
+*/
+.editor-content-overlay {
+  position: relative; /* ✅ FIX */
+  z-index: 5;
+  pointer-events: none; /* Allow clicks to pass except editor */
+}
+
+/* Actual editable content */
+.editor-page-content {
   width: 8.5in;
-  height: 11in;
 
   /* 1-inch margins */
   padding: 1in;
 
-  /* Padding stays inside the page */
   box-sizing: border-box;
 
-  /* Paper look */
-  background: #ffffff;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border-radius: 0;
-
-  /* Future multi-page spacing */
-  margin-bottom: 1rem;
-
-  position: relative;
+  pointer-events: auto; /* Enable typing */
 }
 
 /* =========================
@@ -106,68 +125,27 @@ body {
 }
 
 /* =========================
-   CHARACTER COUNT FOOTER
-========================= */
-
-.editor-footer {
-  max-width: 8.5in;
-  margin: 0 auto;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.character-count {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.character-count__left {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.character-count svg {
-  width: 20px;
-  height: 20px;
-  color: #7c3aed;
-}
-
-.character-count--warning,
-.character-count--warning svg {
-  color: #dc2626;
-}
-
-/* =========================
-   PRINT STYLES (CRITICAL)
+   PRINT STYLES (IMPORTANT)
 ========================= */
 
 @media print {
-  /* Hide everything */
   body * {
     visibility: hidden;
   }
 
-  /* Show only the document page */
-  .editor-page,
-  .editor-page * {
+  .page-container,
+  .page-container * {
     visibility: visible;
   }
 
-  /* Position page for printing */
-  .editor-page {
+  .page-container {
     position: absolute;
     left: 0;
     top: 0;
-
     margin: 0;
     box-shadow: none;
   }
 
-  /* Ensure white background */
   body {
     background: white;
   }
