@@ -12,7 +12,7 @@ body {
 }
 
 /* =========================
-   EDITOR WRAPPER
+   EDITOR LAYOUT (SCREEN)
 ========================= */
 
 .editor-wrapper {
@@ -21,6 +21,21 @@ body {
   padding: 2.5rem 1rem;
   background: #f3f4f6;
   min-height: 100vh;
+}
+
+.pages-stack {
+  width: 8.5in;
+  position: relative;
+}
+
+/* Page frames are positioned absolutely behind content */
+.page-frame {
+  /* Styles are inline for dynamic positioning */
+}
+
+/* Content flows naturally on top */
+.editor-content {
+  /* Styles are inline */
 }
 
 /* =========================
@@ -76,14 +91,38 @@ body {
 }
 
 /* =========================
+   PAGE BREAK CLASSES (FOR PRINT)
+========================= */
+
+.ProseMirror .page-break-before {
+  /* Applied dynamically by JS for print support */
+}
+
+/* =========================
    PRINT STYLES
 ========================= */
 
 @media print {
-  /* Hide page UI elements */
-  .page-number-badge,
-  .page-break-separator {
+  /* Hide visual page UI elements */
+  .page-frame,
+  .page-number {
     display: none !important;
+  }
+
+  /* Apply actual page breaks */
+  .ProseMirror .page-break-before {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Prevent breaks inside elements */
+  .ProseMirror p,
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3,
+  .ProseMirror li {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 
   /* Hide everything except editor */
@@ -91,13 +130,12 @@ body {
     visibility: hidden;
   }
 
-  /* Show editor content */
   .editor-wrapper,
   .editor-wrapper * {
     visibility: visible;
   }
 
-  /* Reset layout */
+  /* Reset layout for print */
   .editor-wrapper {
     position: absolute;
     left: 0;
@@ -106,28 +144,21 @@ body {
     background: white;
   }
 
-  /* Page frames */
-  .page-frame {
-    box-shadow: none !important;
-    border: none !important;
-    page-break-after: always;
+  .pages-stack {
+    position: static;
   }
 
-  .page-frame:last-child {
-    page-break-after: auto;
-  }
-
-  /* Content */
   .editor-content {
-    /* Content will flow through page frames */
+    position: static !important;
+    padding: 1in;
+    min-height: auto !important;
   }
 
-  /* Clean background */
   body {
     background: white;
   }
 
-  /* Page setup */
+  /* Page setup - no margins (content padding provides it) */
   @page {
     size: letter;
     margin: 0;

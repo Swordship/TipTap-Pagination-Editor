@@ -46,7 +46,17 @@ export default function Editor() {
           const breaks = calculatePageBreaks(blocks, pageHeight)
           const pages = calculatePageCount(totalHeight, pageHeight)
 
-          console.log('📊 Pages:', pages)
+          // Apply CSS classes for page breaks (for printing)
+          blocks.forEach((block, index) => {
+            const element = block.element as HTMLElement
+            element.classList.remove('page-break-before')
+            
+            if (breaks.includes(index)) {
+              element.classList.add('page-break-before')
+            }
+          })
+
+          console.log('📊 Pages:', pages, 'Breaks at:', breaks)
 
           setMeasurements({
             pageHeight,
@@ -59,12 +69,13 @@ export default function Editor() {
           })
 
           setPageBreaks(breaks)
-          setPageCount(pages)
+          setPageCount(Math.max(1, pages)) // Always at least 1 page
         }
       )
     }, 200)
 
     editor.on('update', handleUpdate)
+    handleUpdate() // Initial measurement
 
     return () => {
       editor.off('update', handleUpdate)
@@ -74,70 +85,51 @@ export default function Editor() {
 
   if (!editor) return null
 
-  const pageHeightWithPadding = 1056
-  const gap = 24
+  const PAGE_HEIGHT_PX = 1056 // 11in - 2in margins = 9in content @ 96dpi = 864px + padding
+  const PAGE_GAP = 24 // 1.5rem
 
   return (
     <>
       <Toolbar editor={editor} />
 
       <div className="editor-wrapper">
-        <div style={{ width: '8.5in', position: 'relative' }}>
-          {/* PAGE BACKGROUNDS */}
-          {Array.from({ length: pageCount }).map((_, i) => (
-            <div key={`page-${i}`}>
-              {/* Page frame */}
+        <div className="pages-stack" style={{ width: '8.5in', position: 'relative' }}>
+          {/* VISUAL PAGE FRAMES (for screen display) */}
+          {Array.from({ length: pageCount }).map((_, pageIndex) => (
+            <div
+              key={`page-frame-${pageIndex}`}
+              className="page-frame"
+              style={{
+                position: 'absolute',
+                top: pageIndex * (PAGE_HEIGHT_PX + PAGE_GAP),
+                left: 0,
+                width: '8.5in',
+                height: `${PAGE_HEIGHT_PX}px`,
+                background: 'white',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                borderRadius: '2px',
+                border: '1px solid #e5e7eb',
+                zIndex: 0,
+              }}
+            >
+              {/* Page number badge */}
               <div
-                className="page-frame"
+                className="page-number"
                 style={{
                   position: 'absolute',
-                  top: i * (pageHeightWithPadding + gap),
-                  left: 0,
-                  width: '8.5in',
-                  height: `${pageHeightWithPadding}px`,
-                  background: 'white',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                  borderRadius: '2px',
-                  border: '1px solid #e5e7eb',
-                  zIndex: 0,
+                  top: '1rem',
+                  right: '1rem',
+                  zIndex: 10,
                 }}
               >
-                {/* Page number badge */}
-                <div
-                  className="page-number-badge"
-                  style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
-                    zIndex: 10,
-                  }}
-                >
-                  <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium border border-gray-300">
-                    Page {i + 1}
-                  </span>
-                </div>
+                <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full font-medium border border-gray-300">
+                  Page {pageIndex + 1}
+                </span>
               </div>
-
-              {/* Visual page break separator */}
-              {i < pageCount - 1 && (
-                <div
-                  className="page-break-separator"
-                  style={{
-                    position: 'absolute',
-                    top: (i + 1) * pageHeightWithPadding + i * gap + gap / 2,
-                    left: 0,
-                    right: 0,
-                    height: '1px',
-                    background: 'linear-gradient(90deg, transparent, #9ca3af 10%, #9ca3af 90%, transparent)',
-                    zIndex: 10,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
             </div>
           ))}
 
-          {/* CONTENT */}
+          {/* EDITOR CONTENT (flows through visual pages) */}
           <div
             className="editor-content"
             style={{
@@ -146,7 +138,7 @@ export default function Editor() {
               width: '8.5in',
               padding: '1in',
               boxSizing: 'border-box',
-              minHeight: `${pageCount * (pageHeightWithPadding + gap)}px`,
+              minHeight: `${pageCount * (PAGE_HEIGHT_PX + PAGE_GAP) - PAGE_GAP}px`,
             }}
           >
             <EditorContent editor={editor} />
