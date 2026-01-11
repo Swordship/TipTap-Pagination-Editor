@@ -7,7 +7,7 @@
 body {
   margin: 0;
   padding: 0;
-  background: #f3f4f6; /* light gray like Google Docs */
+  background: #f3f4f6;
   font-family: Georgia, "Times New Roman", serif;
 }
 
@@ -23,48 +23,35 @@ body {
   min-height: 100vh;
 }
 
-/* Stack of pages (visual only) */
+/* Page stack container */
 .pages-stack {
   width: 8.5in;
   position: relative;
 }
 
-/* Individual page container (visual shell) */
+/* =========================
+   PAGE BACKGROUNDS
+========================= */
+
 .page-container {
   width: 8.5in;
-  margin-bottom: 1.5rem; /* Space between pages */
-  position: relative;
-}
-
-.page-container:last-child {
-  margin-bottom: 0;
+  position: absolute;
+  left: 0;
 }
 
 /* =========================
-   EDITOR CONTENT OVERLAY
+   EDITOR CONTENT
 ========================= */
 
-/*
-  IMPORTANT:
-  - This must NOT be absolute
-  - Content must flow naturally
-*/
 .editor-content-overlay {
-  position: relative; /* ✅ FIX */
+  position: relative;
   z-index: 5;
-  pointer-events: none; /* Allow clicks to pass except editor */
 }
 
-/* Actual editable content */
 .editor-page-content {
   width: 8.5in;
-
-  /* 1-inch margins */
   padding: 1in;
-
   box-sizing: border-box;
-
-  pointer-events: auto; /* Enable typing */
 }
 
 /* =========================
@@ -79,17 +66,14 @@ body {
   color: #1f2937;
 }
 
-/* Paragraphs */
 .ProseMirror p {
   margin: 0.75rem 0;
 }
 
-/* Headings */
 .ProseMirror h1 {
   font-size: 2rem;
   font-weight: bold;
   margin: 1.25rem 0 0.75rem;
-  color: #111827;
 }
 
 .ProseMirror h2 {
@@ -104,7 +88,6 @@ body {
   margin: 1.25rem 0 0.5rem;
 }
 
-/* Lists */
 .ProseMirror ul,
 .ProseMirror ol {
   padding-left: 1.5rem;
@@ -115,7 +98,6 @@ body {
   margin-bottom: 0.25rem;
 }
 
-/* Blockquote */
 .ProseMirror blockquote {
   border-left: 4px solid #d1d5db;
   padding-left: 1rem;
@@ -125,7 +107,7 @@ body {
 }
 
 /* =========================
-   PRINT STYLES (IMPORTANT)
+   PRINT STYLES
 ========================= */
 
 @media print {
@@ -142,7 +124,6 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    margin: 0;
     box-shadow: none;
   }
 

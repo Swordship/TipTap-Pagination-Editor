@@ -32,9 +32,6 @@ export default function Editor() {
   } | null>(null)
 
   const [pageBreaks, setPageBreaks] = useState<number[]>([])
-  const [pageBreakPositions, setPageBreakPositions] = useState<
-    { blockIndex: number; yPosition: number; pageNumber: number }[]
-  >([])
   const [pageCount, setPageCount] = useState<number>(1)
 
   /* -----------------------------
@@ -59,22 +56,6 @@ export default function Editor() {
           const breaks = calculatePageBreaks(blocks, pageHeight)
           const pages = calculatePageCount(totalHeight, pageHeight)
 
-          const breakPositions = breaks.map((blockIndex, idx) => {
-            const element = blocks[blockIndex].element as HTMLElement
-            const editorRect = editorDOM.getBoundingClientRect()
-            const elementRect = element.getBoundingClientRect()
-
-            return {
-              blockIndex,
-              yPosition: elementRect.top - editorRect.top,
-              pageNumber: idx + 2,
-            }
-          })
-
-          console.log('🔄 Content updated (debounced):')
-          console.log(`  Blocks: ${blocks.length}`)
-          console.log(`  Total pages needed: ${pages}`)
-
           setMeasurements({
             pageHeight,
             totalHeight,
@@ -86,7 +67,6 @@ export default function Editor() {
           })
 
           setPageBreaks(breaks)
-          setPageBreakPositions(breakPositions)
           setPageCount(pages)
         }
       )
@@ -103,17 +83,25 @@ export default function Editor() {
   if (!editor) return null
 
   /* -----------------------------
-     4. Render UI (MULTI-PAGE)
+     4. Render UI (CORRECT)
   ----------------------------- */
   return (
     <>
       {/* Toolbar */}
       <Toolbar editor={editor} />
 
-      {/* Multi-page editor wrapper */}
+      {/* Editor wrapper */}
       <div className="editor-wrapper">
         <div className="pages-stack relative">
-          {/* Render visual page containers */}
+
+          {/* ✅ CONTENT FIRST (normal flow) */}
+          <div className="editor-content-overlay">
+            <div className="editor-page-content">
+              <EditorContent editor={editor} />
+            </div>
+          </div>
+
+          {/* ✅ PAGE FRAMES BEHIND */}
           {Array.from({ length: pageCount }, (_, i) => (
             <PageContainer
               key={i}
@@ -121,17 +109,10 @@ export default function Editor() {
               height={measurements?.pageHeight || 1056}
             />
           ))}
-
-          {/* Editor content overlay */}
-          <div className="editor-content-overlay">
-            <div className="editor-page-content">
-              <EditorContent editor={editor} />
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Debug panel */}
+      {/* Debug Panel */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}
