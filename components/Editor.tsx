@@ -35,6 +35,8 @@ export default function Editor() {
   const [pageBreakPositions, setPageBreakPositions] = useState<
     { blockIndex: number; yPosition: number; pageNumber: number }[]
   >([])
+  const [pageCount, setPageCount] = useState<number>(1)
+
 
   /* -----------------------------
      3. Measure on editor updates
@@ -49,17 +51,24 @@ export default function Editor() {
           measureEditorBlocks,
           calculateTotalHeight,
           calculatePageBreaks,
+          calculatePageCount,
         }) => {
           const pageHeight = measurePageHeight()
           const editorDOM = editor.view.dom
           const blocks = measureEditorBlocks(editorDOM)
           const totalHeight = calculateTotalHeight(blocks)
           const breaks = calculatePageBreaks(blocks, pageHeight)
+          const pages = calculatePageCount(totalHeight, pageHeight)
+
 
           const breakPositions = breaks.map((blockIndex, idx) => {
             const element = blocks[blockIndex].element as HTMLElement
             const editorRect = editorDOM.getBoundingClientRect()
             const elementRect = element.getBoundingClientRect()
+
+          console.log('🔄 Content updated (debounced):')
+          console.log(`  Blocks: ${blocks.length}, Height: ${totalHeight.toFixed(2)}px`)
+          console.log(`  Total pages needed: ${pages}`)
 
             return {
               blockIndex,
@@ -80,6 +89,7 @@ export default function Editor() {
 
           setPageBreaks(breaks)
           setPageBreakPositions(breakPositions)
+          setPageCount(pages)
         }
       )
     }, 200)

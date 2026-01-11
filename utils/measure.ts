@@ -145,3 +145,13 @@ export function calculatePageBreaks(
   
   return pageBreaks
 }
+/**
+ * Calculates how many pages are needed for the content
+ */
+export function calculatePageCount(
+  totalHeight: number,
+  pageHeight: number
+): number {
+  if (totalHeight === 0) return 1 // Always show at least 1 page
+  return Math.ceil(totalHeight / pageHeight)
+}
