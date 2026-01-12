@@ -111,6 +111,38 @@ body {
   font-style: italic;
 }
 
+/* Text Alignment */
+.ProseMirror [style*="text-align: center"],
+.ProseMirror .text-center {
+  text-align: center;
+}
+
+.ProseMirror [style*="text-align: right"],
+.ProseMirror .text-right {
+  text-align: right;
+}
+
+.ProseMirror [style*="text-align: justify"],
+.ProseMirror .text-justify {
+  text-align: justify;
+}
+
+/* Links */
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #1d4ed8;
+}
+
+/* Underline */
+.ProseMirror u {
+  text-decoration: underline;
+}
+
 /* =========================
    PAGE BREAK STYLING
 ========================= */

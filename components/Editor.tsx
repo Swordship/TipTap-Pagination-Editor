@@ -2,6 +2,9 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Underline from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
+import Link from '@tiptap/extension-link'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
 import { useState, useEffect, useCallback } from 'react'
@@ -24,11 +27,32 @@ interface PageBreakInfo {
 
 export default function Editor() {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Underline,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline cursor-pointer hover:text-blue-800',
+        },
+      }),
+    ],
     content: `
       <h1>Welcome to Your Document Editor</h1>
       <p>Start typing your legal document here...</p>
       <p>This editor shows real-time pagination matching US Letter size (8.5" × 11") with 1-inch margins.</p>
+      <p>Features include:</p>
+      <ul>
+        <li><strong>Bold</strong>, <em>italic</em>, and <u>underline</u> formatting</li>
+        <li>Text alignment (left, center, right, justify)</li>
+        <li>Headings (H1, H2, H3)</li>
+        <li>Bullet and numbered lists</li>
+        <li>Block quotes</li>
+        <li>Links</li>
+      </ul>
     `,
     immediatelyRender: false,
   })

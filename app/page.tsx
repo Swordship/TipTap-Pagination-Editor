@@ -5,20 +5,24 @@ export default function Home() {
     <main className="min-h-screen bg-gray-100">
       {/* Header - hidden in print */}
       <div className="bg-white border-b shadow-sm no-print">
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Document Pagination Editor
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Real-time pagination for legal documents • US Letter (8.5 × 11) • 1 margins
-          </p>
-          <div className="mt-3 flex items-center gap-3">
-            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-              ✓ Day 1-3: Setup Complete
-            </span>
-            <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-              → Day 4: Page Break Logic
-            </span>
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-semibold text-gray-800">
+                Document Editor
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Legal document drafting with real-time pagination
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-200">
+                US Letter • 8.5 × 11
+              </span>
+              <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium border border-green-200">
+                1 Margins
+              </span>
+            </div>
           </div>
         </div>
       </div>
