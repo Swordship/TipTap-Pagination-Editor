@@ -5,7 +5,6 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
-// import TextStyle from '@tiptap/extension-text-style'
 import { TextStyle } from '@tiptap/extension-text-style'
 import FontFamily from '@tiptap/extension-font-family'
 import Color from '@tiptap/extension-color'
@@ -286,32 +285,71 @@ export default function Editor() {
                 className="page-break-indicator no-print"
                 style={{
                   position: 'absolute',
-                  top: lineY - 12,
-                  left: PAGE.MARGIN,
-                  right: PAGE.MARGIN,
-                  height: 24,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  top: lineY - 1,
+                  left: 0,
+                  right: 0,
+                  height: 2,
                   zIndex: 15,
                   pointerEvents: 'none',
                 }}
               >
-                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
-                <span
+                {/* Left side page tab */}
+                <div
                   style={{
-                    padding: '3px 12px',
-                    fontSize: '11px',
-                    color: '#64748b',
-                    background: '#f8fafc',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: 4,
-                    margin: '0 8px',
+                    position: 'absolute',
+                    left: 0,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0,
                   }}
                 >
-                  Page {i + 2}
-                </span>
-                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                  {/* Page number badge */}
+                  <div
+                    style={{
+                      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                      color: 'white',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '6px 10px',
+                      borderRadius: '0 6px 6px 0',
+                      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Page {i + 2}
+                  </div>
+                  {/* Arrow pointer */}
+                  <div
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderTop: '8px solid transparent',
+                      borderBottom: '8px solid transparent',
+                      borderLeft: '8px solid #2563eb',
+                    }}
+                  />
+                </div>
+                
+                {/* Dashed line across the page */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 100,
+                    right: 0,
+                    top: '50%',
+                    height: 0,
+                    borderTop: '2px dashed #cbd5e1',
+                  }}
+                />
               </div>
             )
           })}
