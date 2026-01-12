@@ -5,6 +5,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
+// import TextStyle from '@tiptap/extension-text-style'
+import { TextStyle } from '@tiptap/extension-text-style'
+import FontFamily from '@tiptap/extension-font-family'
+import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
 import { useState, useEffect, useCallback } from 'react'
@@ -21,9 +26,30 @@ const PAGE = {
 
 interface PageBreakInfo {
   blockIndex: number
-  position: number      // Y position where break occurs
-  spacerHeight: number  // How much space to add to push content to next page
+  position: number
+  spacerHeight: number
 }
+
+// Custom FontSize extension
+const FontSize = TextStyle.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      fontSize: {
+        default: null,
+        parseHTML: element => element.style.fontSize?.replace(/['"]+/g, ''),
+        renderHTML: attributes => {
+          if (!attributes.fontSize) {
+            return {}
+          }
+          return {
+            style: `font-size: ${attributes.fontSize}`,
+          }
+        },
+      },
+    }
+  },
+})
 
 export default function Editor() {
   const editor = useEditor({
@@ -39,6 +65,17 @@ export default function Editor() {
           class: 'text-blue-600 underline cursor-pointer hover:text-blue-800',
         },
       }),
+      TextStyle,
+      FontFamily.configure({
+        types: ['textStyle'],
+      }),
+      FontSize,
+      Color.configure({
+        types: ['textStyle'],
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
     ],
     content: `
       <h1>Welcome to Your Document Editor</h1>
@@ -48,10 +85,10 @@ export default function Editor() {
       <ul>
         <li><strong>Bold</strong>, <em>italic</em>, and <u>underline</u> formatting</li>
         <li>Text alignment (left, center, right, justify)</li>
+        <li>Font family and size selection</li>
+        <li><mark>Highlight colors</mark> for important text</li>
         <li>Headings (H1, H2, H3)</li>
         <li>Bullet and numbered lists</li>
-        <li>Block quotes</li>
-        <li>Links</li>
       </ul>
     `,
     immediatelyRender: false,
@@ -72,7 +109,6 @@ export default function Editor() {
     const editorDOM = editor.view.dom as HTMLElement
     const editorRect = editorDOM.getBoundingClientRect()
     
-    // Get all block elements
     const blockElements = editorDOM.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, pre, blockquote')
     
     const blocks: Array<{
@@ -87,7 +123,6 @@ export default function Editor() {
       if (el instanceof HTMLElement) {
         const rect = el.getBoundingClientRect()
         if (rect.height > 0) {
-          // Position relative to editor top
           const offsetTop = rect.top - editorRect.top
           blocks.push({
             element: el,
@@ -100,16 +135,13 @@ export default function Editor() {
       }
     })
 
-    // Sort by position
     blocks.sort((a, b) => a.offsetTop - b.offsetTop)
 
-    // First: clear all existing page-break styles
     blocks.forEach(block => {
       block.element.classList.remove('page-break-before')
       block.element.style.paddingTop = ''
     })
 
-    // Re-measure after clearing styles
     const freshBlocks: typeof blocks = []
     blockElements.forEach((el) => {
       if (el instanceof HTMLElement) {
@@ -128,25 +160,17 @@ export default function Editor() {
     })
     freshBlocks.sort((a, b) => a.offsetTop - b.offsetTop)
 
-    // Calculate page breaks
     const breaks: PageBreakInfo[] = []
     let accumulatedSpacer = 0
     
     for (let i = 0; i < freshBlocks.length; i++) {
       const block = freshBlocks[i]
-      
-      // Adjusted position including any spacers we've added
       const adjustedTop = block.offsetTop + accumulatedSpacer
       const adjustedBottom = adjustedTop + block.height
-      
-      // Which page would this block START on?
       const startPage = Math.floor(adjustedTop / (PAGE.PRINTABLE_HEIGHT + PAGE.GAP))
-      // Where does that page end?
       const pageEndY = (startPage + 1) * PAGE.PRINTABLE_HEIGHT + startPage * PAGE.GAP
       
-      // Does block cross this page boundary?
       if (adjustedBottom > pageEndY && adjustedTop < pageEndY) {
-        // Push this block to next page
         const spacerNeeded = pageEndY - adjustedTop + PAGE.GAP
         
         breaks.push({
@@ -157,25 +181,13 @@ export default function Editor() {
         
         block.element.classList.add('page-break-before')
         block.element.style.paddingTop = `${spacerNeeded}px`
-        
         accumulatedSpacer += spacerNeeded
       }
     }
 
-    // Calculate final metrics
     const lastBlock = freshBlocks[freshBlocks.length - 1]
-    const totalHeight = lastBlock 
-      ? lastBlock.bottom + accumulatedSpacer
-      : 0
-    
+    const totalHeight = lastBlock ? lastBlock.bottom + accumulatedSpacer : 0
     const pages = Math.max(1, Math.ceil(totalHeight / (PAGE.PRINTABLE_HEIGHT + PAGE.GAP)))
-
-    console.log('📄 Pagination:', { 
-      pages, 
-      breaks: breaks.length,
-      totalHeight,
-      blockCount: freshBlocks.length,
-    })
 
     setPageCount(pages)
     setPageBreaks(breaks)
@@ -190,15 +202,11 @@ export default function Editor() {
     })
   }, [editor])
 
-  // Set up editor listeners
   useEffect(() => {
     if (!editor) return
 
     const debouncedUpdate = debounce(updatePagination, 100)
-
     editor.on('update', debouncedUpdate)
-    
-    // Initial calculation after DOM settles
     const timer = setTimeout(updatePagination, 100)
 
     return () => {
@@ -210,7 +218,6 @@ export default function Editor() {
 
   if (!editor) return null
 
-  // Total visual height needed for all pages
   const totalPagesHeight = pageCount * PAGE.HEIGHT + (pageCount - 1) * PAGE.GAP
 
   return (
@@ -226,7 +233,6 @@ export default function Editor() {
             minHeight: `${totalPagesHeight}px`,
           }}
         >
-          {/* Page backgrounds - hidden in print */}
           {Array.from({ length: pageCount }).map((_, i) => (
             <div
               key={`page-bg-${i}`}
@@ -242,7 +248,6 @@ export default function Editor() {
                 borderRadius: 2,
               }}
             >
-              {/* Page number */}
               <div
                 className="no-print"
                 style={{
@@ -260,7 +265,6 @@ export default function Editor() {
             </div>
           ))}
 
-          {/* Editor content area */}
           <div
             className="editor-content-area"
             style={{
@@ -274,7 +278,6 @@ export default function Editor() {
             <EditorContent editor={editor} />
           </div>
 
-          {/* Page break indicators - hidden in print */}
           {Array.from({ length: pageCount - 1 }).map((_, i) => {
             const lineY = (i + 1) * PAGE.HEIGHT + i * PAGE.GAP + PAGE.GAP / 2
             return (
@@ -315,7 +318,6 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* Debug panel - hidden in print */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}

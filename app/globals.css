@@ -143,6 +143,27 @@ body {
   text-decoration: underline;
 }
 
+/* Highlight */
+.ProseMirror mark {
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Font Families */
+.ProseMirror [style*="font-family"] {
+  /* Allow inline font-family styles */
+}
+
+/* Font Sizes */
+.ProseMirror [style*="font-size"] {
+  /* Allow inline font-size styles */
+}
+
+/* Text Colors */
+.ProseMirror [style*="color"] {
+  /* Allow inline color styles */
+}
+
 /* =========================
    PAGE BREAK STYLING
 ========================= */
