@@ -2,9 +2,9 @@ import Editor from '../components/Editor'
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <div className="bg-white border-b shadow-sm">
+    <main className="min-h-screen bg-gray-100 print:bg-white print:min-h-0">
+      {/* Header - hidden in print */}
+      <div className="bg-white border-b shadow-sm print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-6">
           <h1 className="text-2xl font-bold text-gray-800">
             Document Pagination Editor
@@ -24,11 +24,11 @@ export default function Home() {
       </div>
 
       {/* Editor Container */}
-      <div className="py-8">
+      <div className="py-8 print:py-0">
         <Editor />
       </div>
 
-      {/* Footer Info */}
+      {/* Footer Info - hidden in print */}
       <div className="bg-white border-t py-4 print:hidden">
         <div className="max-w-5xl mx-auto px-4 text-center text-sm text-gray-500">
           <p>

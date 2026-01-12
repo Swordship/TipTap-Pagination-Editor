@@ -3,48 +3,44 @@
 @tailwind utilities; */
 @import "tailwindcss";
 /* =========================
-   CSS RESET & BASE
+   BASE STYLES
 ========================= */
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
 body {
   margin: 0;
   padding: 0;
-  background: #f3f4f6;
+  background: #f1f5f9;
   font-family: Georgia, "Times New Roman", serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* =========================
-   EDITOR WRAPPER (SCREEN)
+   EDITOR LAYOUT
 ========================= */
 
 .editor-wrapper {
   display: flex;
   justify-content: center;
   padding: 2rem 1rem;
-  background: #f3f4f6;
-  min-height: 100vh;
+  background: #f1f5f9;
+  min-height: calc(100vh - 200px);
 }
 
 .pages-container {
-  /* Dimensions set inline */
-}
-
-.page-frame {
-  /* Styles set inline for dynamic positioning */
-}
-
-.editor-content-wrapper {
-  /* Positioned inline */
+  margin: 0 auto;
 }
 
 /* =========================
-   PROSEMIRROR EDITOR CONTENT
+   PROSEMIRROR CONTENT
 ========================= */
 
 .ProseMirror {
@@ -52,15 +48,15 @@ body {
   min-height: 200px;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 12pt;
-  line-height: 1.5;
-  color: #1a1a1a;
+  line-height: 1.6;
+  color: #111;
 }
 
 .ProseMirror:focus {
   outline: none;
 }
 
-/* Paragraph spacing */
+/* Paragraphs */
 .ProseMirror p {
   margin: 0 0 12pt 0;
 }
@@ -73,25 +69,21 @@ body {
 .ProseMirror h1 {
   font-size: 18pt;
   font-weight: bold;
-  margin: 18pt 0 12pt 0;
+  margin: 0 0 12pt 0;
   line-height: 1.3;
-}
-
-.ProseMirror h1:first-child {
-  margin-top: 0;
 }
 
 .ProseMirror h2 {
   font-size: 14pt;
   font-weight: bold;
-  margin: 14pt 0 10pt 0;
+  margin: 16pt 0 10pt 0;
   line-height: 1.3;
 }
 
 .ProseMirror h3 {
   font-size: 12pt;
   font-weight: bold;
-  margin: 12pt 0 8pt 0;
+  margin: 14pt 0 8pt 0;
   line-height: 1.3;
 }
 
@@ -119,131 +111,129 @@ body {
   font-style: italic;
 }
 
-/* Code blocks */
-.ProseMirror pre {
-  background: #f8f9fa;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 12pt;
-  margin: 12pt 0;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 10pt;
-  overflow-x: auto;
-}
-
-.ProseMirror code {
-  font-family: "Courier New", Courier, monospace;
-  font-size: 10pt;
-  background: #f3f4f6;
-  padding: 1pt 3pt;
-  border-radius: 2px;
-}
-
 /* =========================
-   PAGE BREAK CLASS (APPLIED BY JS)
+   PAGE BREAK STYLING
 ========================= */
 
 .ProseMirror .page-break-before {
-  /* Visual indicator on screen */
+  /* Padding is set dynamically via JS */
   position: relative;
 }
 
+/* Visual indicator line before page break element */
 .ProseMirror .page-break-before::before {
   content: '';
-  display: block;
-  height: 40px; /* Match PAGE_GAP_PX */
-  margin-bottom: 12pt;
-}
-
-/* =========================
-   PAGE BREAK INDICATOR
-========================= */
-
-.page-break-indicator {
-  /* Styles set inline */
+  position: absolute;
+  top: 20px; /* Half of the gap */
+  left: -96px; /* Extend to page edge */
+  right: -96px;
+  height: 0;
+  border-top: 1px dashed #cbd5e1;
 }
 
 /* =========================
    PRINT STYLES
-   Critical for matching US Letter output
 ========================= */
 
 @media print {
-  /* Page setup - US Letter with no browser margins */
+  /* Page setup */
   @page {
     size: letter portrait;
     margin: 1in;
   }
 
-  /* Reset everything for print */
+  /* Reset */
   html, body {
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    width: auto !important;
+    height: auto !important;
   }
 
-  /* Hide non-print elements */
-  .page-frame,
-  .page-break-indicator,
-  .page-number,
-  .editor-wrapper > *:not(.pages-container),
+  /* Hide everything except editor content */
+  body > *:not(main),
   header,
   nav,
   footer,
   .sticky,
+  [class*="toolbar"],
+  [class*="Toolbar"],
   [class*="debug"],
-  [class*="Debug"] {
+  [class*="Debug"],
+  .page-background,
+  .page-break-indicator,
+  .print-hidden {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Hide page visual elements but keep content */
-  .editor-wrapper {
+  /* Main container */
+  main {
     display: block !important;
     padding: 0 !important;
+    margin: 0 !important;
     background: white !important;
     min-height: auto !important;
   }
 
+  /* Hide the header section in page.tsx */
+  main > div:first-child {
+    display: none !important;
+  }
+
+  /* Hide footer */
+  main > div:last-child {
+    display: none !important;
+  }
+
+  /* Editor wrapper */
+  .editor-wrapper {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  /* Pages container */
   .pages-container {
     position: static !important;
     width: auto !important;
     min-height: auto !important;
-  }
-
-  .page-frame {
-    display: none !important;
-  }
-
-  .editor-content-wrapper {
-    position: static !important;
-    width: auto !important;
-    min-height: auto !important;
-    padding: 0 !important;
     margin: 0 !important;
   }
 
-  /* ProseMirror print styles */
-  .ProseMirror {
-    min-height: auto !important;
-    font-size: 12pt !important;
-    line-height: 1.5 !important;
+  /* Hide visual page backgrounds */
+  .page-background {
+    display: none !important;
   }
 
-  /* Page breaks */
+  /* Editor content */
+  .editor-content-area {
+    position: static !important;
+    padding: 0 !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
+
+  /* ProseMirror */
+  .ProseMirror {
+    min-height: auto !important;
+  }
+
+  /* Page break behavior */
   .ProseMirror .page-break-before {
     page-break-before: always !important;
     break-before: page !important;
+    padding-top: 0 !important; /* Remove visual spacing in print */
   }
 
   .ProseMirror .page-break-before::before {
     display: none !important;
-    height: 0 !important;
-    margin: 0 !important;
   }
 
-  /* Prevent breaks inside elements */
+  /* Prevent awkward breaks */
   .ProseMirror p,
   .ProseMirror h1,
   .ProseMirror h2,
@@ -254,57 +244,33 @@ body {
     break-inside: avoid !important;
   }
 
-  /* Keep headings with following content */
   .ProseMirror h1,
   .ProseMirror h2,
   .ProseMirror h3 {
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
+}
 
-  /* Ensure images don't break */
-  .ProseMirror img {
-    max-width: 100% !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+/* =========================
+   UTILITY CLASSES
+========================= */
+
+/* Print visibility utilities (for Tailwind) */
+@media print {
+  .print\:hidden {
+    display: none !important;
   }
-}
-
-/* =========================
-   TOOLBAR STYLES
-========================= */
-
-.toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 8px 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* =========================
-   SCROLLBAR STYLING
-========================= */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  
+  .print\:block {
+    display: block !important;
+  }
+  
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+  
+  .print\:bg-white {
+    background: white !important;
+  }
 }

@@ -4,19 +4,25 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Toolbar from './Toolbar'
 import MeasurementDebug from './MeasurementDebug'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
-import { PAGE_CONFIG } from '../utils/measure'
+
+// US Letter at 96 DPI
+const PAGE = {
+  WIDTH: 816,           // 8.5 inches
+  HEIGHT: 1056,         // 11 inches  
+  MARGIN: 96,           // 1 inch
+  PRINTABLE_HEIGHT: 864, // 9 inches (11 - 2 margins)
+  GAP: 40,              // Visual gap between pages
+}
 
 interface PageBreakInfo {
   blockIndex: number
-  pageNumber: number
-  breakPosition: number
+  position: number      // Y position where break occurs
+  spacerHeight: number  // How much space to add to push content to next page
 }
 
 export default function Editor() {
-  const editorRef = useRef<HTMLDivElement>(null)
-  
   const editor = useEditor({
     extensions: [StarterKit],
     content: `
@@ -27,219 +33,269 @@ export default function Editor() {
     immediatelyRender: false,
   })
 
-  // Use static values initially - these are correct for 96 DPI
-  const [pageDimensions, setPageDimensions] = useState({
-    pageWidth: PAGE_CONFIG.WIDTH_PX,
-    pageHeight: PAGE_CONFIG.HEIGHT_PX,
-    margin: PAGE_CONFIG.MARGIN_PX,
-    printableHeight: PAGE_CONFIG.PRINTABLE_HEIGHT_PX,
-    oneInch: PAGE_CONFIG.DPI,
-  })
-  
+  const [pageCount, setPageCount] = useState(1)
+  const [pageBreaks, setPageBreaks] = useState<PageBreakInfo[]>([])
   const [measurements, setMeasurements] = useState<{
     totalHeight: number
     blockCount: number
     blocks: { type: string; height: number; offsetTop: number }[]
   } | null>(null)
 
-  const [pageBreaks, setPageBreaks] = useState<PageBreakInfo[]>([])
-  const [pageCount, setPageCount] = useState<number>(1)
-
-  // Get actual page dimensions on mount (client-side only)
-  useEffect(() => {
-    import('../utils/measure').then(({ getPageDimensions }) => {
-      const dims = getPageDimensions()
-      setPageDimensions(dims)
-      console.log('📐 Page dimensions:', dims)
-    })
-  }, [])
-
-  // Measure and calculate pagination
+  // Calculate pagination
   const updatePagination = useCallback(() => {
     if (!editor) return
 
-    // Dynamic import to avoid SSR issues
-    import('../utils/measure').then(({
-      measureEditorBlocks,
-      calculateTotalHeight,
-      calculatePageBreaks,
-      calculatePageCount,
-    }) => {
-      const editorDOM = editor.view.dom as HTMLElement
-      const blocks = measureEditorBlocks(editorDOM)
-      const totalHeight = calculateTotalHeight(editorDOM)
-      const breaks = calculatePageBreaks(blocks, pageDimensions.printableHeight)
-      const pages = calculatePageCount(totalHeight, pageDimensions.printableHeight)
+    const editorDOM = editor.view.dom as HTMLElement
+    const editorRect = editorDOM.getBoundingClientRect()
+    
+    // Get all block elements
+    const blockElements = editorDOM.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, pre, blockquote')
+    
+    const blocks: Array<{
+      element: HTMLElement
+      type: string
+      height: number
+      offsetTop: number
+      bottom: number
+    }> = []
 
-      // Apply page-break-before class to blocks that start new pages
-      const breakIndices = breaks.map(b => b.blockIndex)
-      blocks.forEach((block, index) => {
-        const element = block.element as HTMLElement
-        element.classList.remove('page-break-before')
-        
-        if (breakIndices.includes(index)) {
-          element.classList.add('page-break-before')
+    blockElements.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        const rect = el.getBoundingClientRect()
+        if (rect.height > 0) {
+          // Position relative to editor top
+          const offsetTop = rect.top - editorRect.top
+          blocks.push({
+            element: el,
+            type: el.tagName.toLowerCase(),
+            height: rect.height,
+            offsetTop,
+            bottom: offsetTop + rect.height,
+          })
         }
-      })
-
-      console.log('📄 Pagination update:', { pages, breaks: breaks.length, totalHeight })
-
-      setMeasurements({
-        totalHeight,
-        blockCount: blocks.length,
-        blocks: blocks.map(b => ({
-          type: b.type,
-          height: b.height,
-          offsetTop: b.offsetTop,
-        })),
-      })
-
-      setPageBreaks(breaks)
-      setPageCount(Math.max(1, pages))
+      }
     })
-  }, [editor, pageDimensions.printableHeight])
 
-  // Set up editor update listener
+    // Sort by position
+    blocks.sort((a, b) => a.offsetTop - b.offsetTop)
+
+    // First: clear all existing page-break styles
+    blocks.forEach(block => {
+      block.element.classList.remove('page-break-before')
+      block.element.style.paddingTop = ''
+    })
+
+    // Re-measure after clearing styles
+    const freshBlocks: typeof blocks = []
+    blockElements.forEach((el) => {
+      if (el instanceof HTMLElement) {
+        const rect = el.getBoundingClientRect()
+        if (rect.height > 0) {
+          const offsetTop = rect.top - editorRect.top
+          freshBlocks.push({
+            element: el,
+            type: el.tagName.toLowerCase(),
+            height: rect.height,
+            offsetTop,
+            bottom: offsetTop + rect.height,
+          })
+        }
+      }
+    })
+    freshBlocks.sort((a, b) => a.offsetTop - b.offsetTop)
+
+    // Calculate page breaks
+    const breaks: PageBreakInfo[] = []
+    let accumulatedSpacer = 0
+    
+    for (let i = 0; i < freshBlocks.length; i++) {
+      const block = freshBlocks[i]
+      
+      // Adjusted position including any spacers we've added
+      const adjustedTop = block.offsetTop + accumulatedSpacer
+      const adjustedBottom = adjustedTop + block.height
+      
+      // Which page would this block START on?
+      const startPage = Math.floor(adjustedTop / (PAGE.PRINTABLE_HEIGHT + PAGE.GAP))
+      // Where does that page end?
+      const pageEndY = (startPage + 1) * PAGE.PRINTABLE_HEIGHT + startPage * PAGE.GAP
+      
+      // Does block cross this page boundary?
+      if (adjustedBottom > pageEndY && adjustedTop < pageEndY) {
+        // Push this block to next page
+        const spacerNeeded = pageEndY - adjustedTop + PAGE.GAP
+        
+        breaks.push({
+          blockIndex: i,
+          position: pageEndY,
+          spacerHeight: spacerNeeded,
+        })
+        
+        block.element.classList.add('page-break-before')
+        block.element.style.paddingTop = `${spacerNeeded}px`
+        
+        accumulatedSpacer += spacerNeeded
+      }
+    }
+
+    // Calculate final metrics
+    const lastBlock = freshBlocks[freshBlocks.length - 1]
+    const totalHeight = lastBlock 
+      ? lastBlock.bottom + accumulatedSpacer
+      : 0
+    
+    const pages = Math.max(1, Math.ceil(totalHeight / (PAGE.PRINTABLE_HEIGHT + PAGE.GAP)))
+
+    console.log('📄 Pagination:', { 
+      pages, 
+      breaks: breaks.length,
+      totalHeight,
+      blockCount: freshBlocks.length,
+    })
+
+    setPageCount(pages)
+    setPageBreaks(breaks)
+    setMeasurements({
+      totalHeight,
+      blockCount: freshBlocks.length,
+      blocks: freshBlocks.map(b => ({
+        type: b.type,
+        height: b.height,
+        offsetTop: b.offsetTop,
+      })),
+    })
+  }, [editor])
+
+  // Set up editor listeners
   useEffect(() => {
     if (!editor) return
 
-    const debouncedUpdate = debounce(updatePagination, 150)
+    const debouncedUpdate = debounce(updatePagination, 100)
 
     editor.on('update', debouncedUpdate)
     
-    // Initial measurement after a short delay for DOM to settle
-    setTimeout(updatePagination, 100)
+    // Initial calculation after DOM settles
+    const timer = setTimeout(updatePagination, 100)
 
     return () => {
       editor.off('update', debouncedUpdate)
       debouncedUpdate.cancel()
+      clearTimeout(timer)
     }
   }, [editor, updatePagination])
 
   if (!editor) return null
 
-  const { pageWidth, pageHeight, margin, printableHeight } = pageDimensions
-  const pageGap = PAGE_CONFIG.PAGE_GAP_PX
-
-  // Total height of all pages including gaps
-  const totalPagesHeight = pageCount * pageHeight + (pageCount - 1) * pageGap
+  // Total visual height needed for all pages
+  const totalPagesHeight = pageCount * PAGE.HEIGHT + (pageCount - 1) * PAGE.GAP
 
   return (
     <>
       <Toolbar editor={editor} />
 
-      <div className="editor-wrapper">
-        {/* Pages container */}
+      <div className="editor-wrapper print:block print:p-0 print:bg-white">
         <div 
           className="pages-container"
           style={{
             position: 'relative',
-            width: `${pageWidth}px`,
+            width: `${PAGE.WIDTH}px`,
             minHeight: `${totalPagesHeight}px`,
           }}
         >
-          {/* Render each page frame */}
-          {Array.from({ length: pageCount }).map((_, pageIndex) => {
-            const pageTop = pageIndex * (pageHeight + pageGap)
-            
-            return (
+          {/* Page backgrounds - hidden in print */}
+          {Array.from({ length: pageCount }).map((_, i) => (
+            <div
+              key={`page-bg-${i}`}
+              className="page-background print:hidden"
+              style={{
+                position: 'absolute',
+                top: i * (PAGE.HEIGHT + PAGE.GAP),
+                left: 0,
+                width: PAGE.WIDTH,
+                height: PAGE.HEIGHT,
+                background: 'white',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                borderRadius: 2,
+              }}
+            >
+              {/* Page number */}
               <div
-                key={`page-${pageIndex}`}
-                className="page-frame"
+                className="print:hidden"
                 style={{
                   position: 'absolute',
-                  top: `${pageTop}px`,
-                  left: 0,
-                  width: `${pageWidth}px`,
-                  height: `${pageHeight}px`,
-                  background: 'white',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)',
-                  borderRadius: '2px',
-                  border: '1px solid #e0e0e0',
-                  boxSizing: 'border-box',
+                  bottom: PAGE.MARGIN * 0.4,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  fontSize: '10pt',
+                  color: '#888',
+                  fontFamily: '"Times New Roman", serif',
                 }}
               >
-                {/* Page number footer */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: `${margin * 0.4}px`,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontFamily: '"Times New Roman", Times, serif',
-                    fontSize: '11pt',
-                    color: '#666',
-                  }}
-                >
-                  {pageIndex + 1}
-                </div>
+                {i + 1}
               </div>
-            )
-          })}
+            </div>
+          ))}
 
-          {/* Editor content overlay - positioned within first page's content area */}
+          {/* Editor content area */}
           <div
-            ref={editorRef}
-            className="editor-content-wrapper"
+            className="editor-content-area"
             style={{
-              position: 'absolute',
-              top: `${margin}px`,
-              left: `${margin}px`,
-              width: `${pageWidth - 2 * margin}px`,
-              minHeight: `${printableHeight}px`,
+              position: 'relative',
               zIndex: 10,
+              padding: PAGE.MARGIN,
+              width: PAGE.WIDTH,
+              boxSizing: 'border-box',
             }}
           >
             <EditorContent editor={editor} />
           </div>
 
-          {/* Visual page break indicators */}
-          {pageBreaks.map((breakInfo, idx) => {
-            const breakY = margin + breakInfo.breakPosition
-            
+          {/* Page break indicators - hidden in print */}
+          {Array.from({ length: pageCount - 1 }).map((_, i) => {
+            const lineY = (i + 1) * PAGE.HEIGHT + i * PAGE.GAP + PAGE.GAP / 2
             return (
               <div
-                key={`break-indicator-${idx}`}
-                className="page-break-indicator"
+                key={`break-line-${i}`}
+                className="page-break-indicator print:hidden"
                 style={{
                   position: 'absolute',
-                  top: `${breakY}px`,
-                  left: 0,
-                  right: 0,
-                  height: `${pageGap}px`,
+                  top: lineY - 12,
+                  left: PAGE.MARGIN,
+                  right: PAGE.MARGIN,
+                  height: 24,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  zIndex: 15,
                   pointerEvents: 'none',
-                  zIndex: 20,
                 }}
               >
-                <div
+                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
+                <span
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '4px 12px',
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    borderRadius: '4px',
-                    border: '1px dashed rgba(59, 130, 246, 0.4)',
+                    padding: '3px 12px',
+                    fontSize: '11px',
+                    color: '#64748b',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 4,
+                    margin: '0 8px',
                   }}
                 >
-                  <span style={{ fontSize: '12px', color: '#3b82f6' }}>
-                    ✂️ Page {breakInfo.pageNumber} starts here
-                  </span>
-                </div>
+                  Page {i + 2}
+                </span>
+                <div style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
               </div>
             )
           })}
         </div>
       </div>
 
-      {/* Debug panel */}
+      {/* Debug panel - hidden in print */}
       {measurements && (
         <MeasurementDebug
           blocks={measurements.blocks}
-          pageHeight={printableHeight}
+          pageHeight={PAGE.PRINTABLE_HEIGHT}
           totalHeight={measurements.totalHeight}
           pageBreaks={pageBreaks.map(b => b.blockIndex)}
           pageCount={pageCount}

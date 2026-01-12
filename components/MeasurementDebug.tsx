@@ -25,7 +25,7 @@ export default function MeasurementDebug({
   const singlePagePercentage = Math.min(100, (totalHeight / pageHeight) * 100)
 
   return (
-    <div className="measurement-debug max-w-4xl mx-auto px-4 mt-8 print:hidden">
+    <div className="measurement-debug max-w-4xl mx-auto px-4 mt-8 mb-8 print:hidden">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-lg font-bold mb-4 text-gray-800">
           📊 Pagination Debug Panel
