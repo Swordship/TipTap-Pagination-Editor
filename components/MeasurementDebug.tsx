@@ -25,7 +25,7 @@ export default function MeasurementDebug({
   const singlePagePercentage = Math.min(100, (totalHeight / pageHeight) * 100)
 
   return (
-    <div className="measurement-debug max-w-4xl mx-auto px-4 mt-8 mb-8 print:hidden">
+    <div className="measurement-debug max-w-4xl mx-auto px-4 mt-8 mb-8 no-print">
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h3 className="text-lg font-bold mb-4 text-gray-800">
           📊 Pagination Debug Panel
@@ -152,9 +152,9 @@ export default function MeasurementDebug({
         {/* Page Dimensions Reference */}
         <div className="mt-4 pt-4 border-t">
           <div className="text-xs text-gray-500">
-            <strong>US Letter:</strong> 8.5&quot; × 11&quot; |
-            <strong> Margins:</strong> 1&quot; each side |
-            <strong> Printable area:</strong> 6.5&quot; × 9&quot; ({pageHeight.toFixed(0)}px @ 96 DPI)
+            <strong>US Letter:</strong> 8.5 × 11 | 
+            <strong> Margins:</strong> 1 each side | 
+            <strong> Printable area:</strong> 6.5 × 9 ({pageHeight.toFixed(0)}px @ 96 DPI)
           </div>
         </div>
       </div>

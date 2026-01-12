@@ -15,7 +15,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
   if (!editor) return null
 
   return (
-    <div className="sticky top-0 z-50 flex flex-wrap gap-2 border-b bg-white px-4 py-3 shadow-sm print:hidden">
+    <div className="sticky top-0 z-50 flex flex-wrap gap-2 border-b bg-white px-4 py-3 shadow-sm no-print">
       {/* Text formatting */}
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}

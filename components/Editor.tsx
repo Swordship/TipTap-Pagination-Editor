@@ -7,13 +7,13 @@ import MeasurementDebug from './MeasurementDebug'
 import { useState, useEffect, useCallback } from 'react'
 import { debounce } from 'lodash'
 
-// US Letter at 96 DPI
+// US Letter at 96 DPI - TRUE dimensions
 const PAGE = {
-  WIDTH: 816,           // 8.5 inches
-  HEIGHT: 1056,         // 11 inches  
-  MARGIN: 96,           // 1 inch
-  PRINTABLE_HEIGHT: 864, // 9 inches (11 - 2 margins)
-  GAP: 40,              // Visual gap between pages
+  WIDTH: 816,            // 8.5 inches
+  HEIGHT: 1056,          // 11 inches  
+  MARGIN: 96,            // 1 inch
+  PRINTABLE_HEIGHT: 864, // 9 inches (exact US Letter with 1" margins)
+  GAP: 40,               // Visual gap between pages
 }
 
 interface PageBreakInfo {
@@ -193,7 +193,7 @@ export default function Editor() {
     <>
       <Toolbar editor={editor} />
 
-      <div className="editor-wrapper print:block print:p-0 print:bg-white">
+      <div className="editor-wrapper">
         <div 
           className="pages-container"
           style={{
@@ -206,7 +206,7 @@ export default function Editor() {
           {Array.from({ length: pageCount }).map((_, i) => (
             <div
               key={`page-bg-${i}`}
-              className="page-background print:hidden"
+              className="page-background no-print"
               style={{
                 position: 'absolute',
                 top: i * (PAGE.HEIGHT + PAGE.GAP),
@@ -220,7 +220,7 @@ export default function Editor() {
             >
               {/* Page number */}
               <div
-                className="print:hidden"
+                className="no-print"
                 style={{
                   position: 'absolute',
                   bottom: PAGE.MARGIN * 0.4,
@@ -256,7 +256,7 @@ export default function Editor() {
             return (
               <div
                 key={`break-line-${i}`}
-                className="page-break-indicator print:hidden"
+                className="page-break-indicator no-print"
                 style={{
                   position: 'absolute',
                   top: lineY - 12,

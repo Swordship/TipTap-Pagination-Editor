@@ -136,7 +136,7 @@ body {
 ========================= */
 
 @media print {
-  /* Page setup */
+  /* Page setup - exact US Letter with 1" margins */
   @page {
     size: letter portrait;
     margin: 1in;
@@ -163,7 +163,7 @@ body {
   [class*="Debug"],
   .page-background,
   .page-break-indicator,
-  .print-hidden {
+  .no-print {
     display: none !important;
     visibility: hidden !important;
   }
@@ -256,21 +256,13 @@ body {
    UTILITY CLASSES
 ========================= */
 
-/* Print visibility utilities (for Tailwind) */
+/* No-print utility class */
+.no-print {
+  /* Handled in @media print above */
+}
+
 @media print {
-  .print\:hidden {
+  .no-print {
     display: none !important;
-  }
-  
-  .print\:block {
-    display: block !important;
-  }
-  
-  .print\:p-0 {
-    padding: 0 !important;
-  }
-  
-  .print\:bg-white {
-    background: white !important;
   }
 }
