@@ -35,8 +35,12 @@ body {
   min-height: calc(100vh - 200px);
 }
 
-.pages-container {
-  margin: 0 auto;
+.editor-container {
+  /* Styles set inline */
+}
+
+.editor-content-area {
+  /* Styles set inline */
 }
 
 /* =========================
@@ -88,14 +92,23 @@ body {
 }
 
 /* Lists */
-.ProseMirror ul,
+.ProseMirror ul {
+  padding-left: 24pt;
+  margin: 8pt 0;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
 .ProseMirror ol {
   padding-left: 24pt;
   margin: 8pt 0;
+  list-style-type: decimal;
+  list-style-position: outside;
 }
 
 .ProseMirror li {
   margin-bottom: 4pt;
+  display: list-item;
 }
 
 .ProseMirror li p {
@@ -168,20 +181,15 @@ body {
    PAGE BREAK STYLING
 ========================= */
 
+/* Applied to blocks that start a new page */
 .ProseMirror .page-break-before {
-  /* Padding is set dynamically via JS */
   position: relative;
+  /* paddingTop set dynamically via JS */
 }
 
-/* Visual indicator line before page break element */
-.ProseMirror .page-break-before::before {
-  content: '';
-  position: absolute;
-  top: 20px; /* Half of the gap */
-  left: -96px; /* Extend to page edge */
-  right: -96px;
-  height: 0;
-  border-top: 1px dashed #cbd5e1;
+/* Page break marker container */
+.page-break-marker {
+  /* Styles set inline */
 }
 
 /* =========================
@@ -204,8 +212,10 @@ body {
     height: auto !important;
   }
 
-  /* Hide everything except editor content */
-  body > *:not(main),
+  /* Hide non-print elements */
+  .no-print,
+  .page-break-marker,
+  .page-info,
   header,
   nav,
   footer,
@@ -213,10 +223,7 @@ body {
   [class*="toolbar"],
   [class*="Toolbar"],
   [class*="debug"],
-  [class*="Debug"],
-  .page-background,
-  .page-break-indicator,
-  .no-print {
+  [class*="Debug"] {
     display: none !important;
     visibility: hidden !important;
   }
@@ -230,12 +237,8 @@ body {
     min-height: auto !important;
   }
 
-  /* Hide the header section in page.tsx */
-  main > div:first-child {
-    display: none !important;
-  }
-
-  /* Hide footer */
+  /* Hide header/footer divs */
+  main > div:first-child,
   main > div:last-child {
     display: none !important;
   }
@@ -249,17 +252,14 @@ body {
     min-height: auto !important;
   }
 
-  /* Pages container */
-  .pages-container {
+  /* Editor container */
+  .editor-container {
     position: static !important;
     width: auto !important;
     min-height: auto !important;
     margin: 0 !important;
-  }
-
-  /* Hide visual page backgrounds */
-  .page-background {
-    display: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
   /* Editor content */
@@ -275,18 +275,14 @@ body {
     min-height: auto !important;
   }
 
-  /* Page break behavior */
+  /* PAGE BREAK - THIS IS THE KEY */
   .ProseMirror .page-break-before {
     page-break-before: always !important;
     break-before: page !important;
-    padding-top: 0 !important; /* Remove visual spacing in print */
+    padding-top: 0 !important; /* Remove visual spacing - browser handles actual break */
   }
 
-  .ProseMirror .page-break-before::before {
-    display: none !important;
-  }
-
-  /* Prevent awkward breaks */
+  /* Prevent awkward breaks inside elements */
   .ProseMirror p,
   .ProseMirror h1,
   .ProseMirror h2,
@@ -297,6 +293,7 @@ body {
     break-inside: avoid !important;
   }
 
+  /* Keep headings with following content */
   .ProseMirror h1,
   .ProseMirror h2,
   .ProseMirror h3 {
