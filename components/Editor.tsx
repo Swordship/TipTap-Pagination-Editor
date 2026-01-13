@@ -77,18 +77,64 @@ export default function Editor() {
       }),
     ],
     content: `
-      <h1>Welcome to Your Document Editor</h1>
-      <p>Start typing your legal document here...</p>
-      <p>This editor shows real-time pagination matching US Letter size (8.5" × 11") with 1-inch margins.</p>
-      <p>Features include:</p>
-      <ul>
-        <li><strong>Bold</strong>, <em>italic</em>, and <u>underline</u> formatting</li>
-        <li>Text alignment (left, center, right, justify)</li>
-        <li>Font family and size selection</li>
-        <li><mark>Highlight colors</mark> for important text</li>
-        <li>Headings (H1, H2, H3)</li>
-        <li>Bullet and numbered lists</li>
-      </ul>
+      <p style="text-align: right;">
+  January 13, 2026
+</p>
+
+<p>
+  U.S. Citizenship and Immigration Services
+</p>
+
+<p>
+  <strong>Re: O-1 Visa Petition for Mr. John</strong>
+</p>
+
+<p>
+  Dear USCIS Adjudicating Officer:
+</p>
+
+<p>
+  This letter is submitted in support of the O-1 nonimmigrant visa petition on behalf of
+  <strong>Mr. John</strong>. We respectfully request that USCIS grant O-1 classification based
+  on Mr. John's extraordinary ability and sustained national or international acclaim in his
+  field of endeavor.
+</p>
+
+<p>
+  The O-1 visa category is reserved for individuals who possess extraordinary ability in the
+  sciences, arts, education, business, or athletics, demonstrated by sustained national or
+  international acclaim. Mr. John has achieved the highest level of recognition in his field
+  and continues to make significant contributions that distinguish him as one of the select
+  few who have risen to the very top of their profession.
+</p>
+
+<p>
+  This petition includes comprehensive documentation that clearly establishes Mr. John's
+  eligibility for O-1 classification. The evidence demonstrates that he meets the requisite
+  criteria for extraordinary ability and that his presence in the United States will
+  substantially benefit his field prospectively.
+</p>
+
+<p>
+  We have organized the supporting documentation in a clear and logical manner to facilitate
+  your review. The evidence presented herein conclusively demonstrates that Mr. John satisfies
+  the evidentiary requirements for O-1 classification and merits approval of this petition.
+</p>
+
+<p>
+  Thank you for your time and consideration of this petition. Should you require any additional
+  information or documentation, please do not hesitate to contact our office.
+</p>
+
+<p>
+  Respectfully submitted,
+</p>
+
+<p>
+  [Attorney Name]<br />
+  [Law Firm Name]<br />
+  [Contact Information]
+</p>
     `,
     immediatelyRender: false,
   })

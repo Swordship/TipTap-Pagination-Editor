@@ -111,39 +111,7 @@ const fontFamilies = [
 ]
 
 const fontSizes = ['10pt', '11pt', '12pt', '14pt', '16pt', '18pt', '24pt', '36pt']
-// Button component
-  const ToolbarButton = ({ 
-    onClick, 
-    isActive = false, 
-    disabled = false,
-    title,
-    children 
-  }: { 
-    onClick: () => void
-    isActive?: boolean
-    disabled?: boolean
-    title: string
-    children: React.ReactNode 
-  }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`
-        p-2 rounded transition-all duration-150
-        ${isActive 
-          ? 'bg-blue-100 text-blue-700 border border-blue-300' 
-          : 'bg-white text-gray-600 border border-transparent hover:bg-gray-100 hover:border-gray-200'
-        }
-        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-      `}
-    >
-      {children}
-    </button>
-  )
-    const Divider = () => (
-    <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
-  )
+
 export default function Toolbar({ editor }: ToolbarProps) {
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
@@ -198,9 +166,40 @@ export default function Toolbar({ editor }: ToolbarProps) {
 
   if (!editor) return null
 
-  
+  // Button component
+  const ToolbarButton = ({ 
+    onClick, 
+    isActive = false, 
+    disabled = false,
+    title,
+    children 
+  }: { 
+    onClick: () => void
+    isActive?: boolean
+    disabled?: boolean
+    title: string
+    children: React.ReactNode 
+  }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`
+        p-2 rounded transition-all duration-150
+        ${isActive 
+          ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+          : 'bg-white text-gray-600 border border-transparent hover:bg-gray-100 hover:border-gray-200'
+        }
+        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+      `}
+    >
+      {children}
+    </button>
+  )
 
-
+  const Divider = () => (
+    <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
+  )
 
   return (
     <div className="sticky top-0 z-50 bg-white border-b shadow-sm no-print">
@@ -459,11 +458,41 @@ export default function Toolbar({ editor }: ToolbarProps) {
         {/* Print Button */}
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-300 rounded-lg hover:bg-green-100 transition-colors font-medium text-sm"
+          className="flex items-center gap-2 px-3 py-2 bg-gray-50 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
           title="Print Document (Ctrl+P)"
         >
           <Icons.Print />
           Print
+        </button>
+
+        {/* Export PDF Button */}
+        <button
+          onClick={async () => {
+            const element = document.querySelector('.ProseMirror') as HTMLElement | null;
+            if (!element) return;
+            
+            // Dynamic import html2pdf to avoid SSR issues
+            const html2pdfModule = await import('html2pdf.js');
+            const html2pdf = html2pdfModule.default;
+            
+            const opt = {
+              margin: 1,
+              filename: 'document.pdf',
+              image: { type: 'jpeg' as const, quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true },
+              jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
+              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as const }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+          }}
+          className="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 border border-green-300 rounded-lg hover:bg-green-100 transition-colors font-medium text-sm"
+          title="Export as PDF"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export PDF
         </button>
       </div>
     </div>
